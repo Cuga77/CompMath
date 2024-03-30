@@ -1,29 +1,8 @@
-#include <opencv2/opencv.hpp>
 #include <vector>
 #include <mutex>
 #include <thread>
 #include <iostream>
 
-
-void visualize(const std::vector<double>& xs, const std::vector<double>& ys) {
-    int rows = xs.size();
-    int cols = ys.size();
-
-    // Создаем изображение
-    cv::Mat img(rows, cols, CV_8UC1);
-
-    // Заполняем изображение значениями
-    for (int i = 0; i < rows; i++) {
-        for (int j = 0; j < cols; j++) {
-            // Преобразуем значение в диапазоне 0-255
-            img.at<uchar>(i, j) = cv::saturate_cast<uchar>(xs[i] * ys[j] * 255);
-        }
-    }
-
-    // Показываем изображение
-    cv::imshow("Brusselator Visualization", img);
-    cv::waitKey(0);
-}
 
 // Параметры брюсселятора
 double a = 1.0;

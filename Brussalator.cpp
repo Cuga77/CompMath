@@ -2,47 +2,68 @@
 #include <cmath>
 #include <vector>
 #include <fstream>
+#include <matplotlibcpp.h> // Добавьте эту библиотеку для визуализации
+#include <numpy/arrayobject.h> // Добавьте эту библиотеку для работы с массивами
 
+namespace plt = matplotlibcpp;
 
-void rk4(double x, double y, double alpha, double beta, double delta, double gamma, double h, std::vector<double>& x_values, std::vector<double>& y_values) {
-    double k1_x = h * (alpha * x - beta * x * y);
-    double k1_y = h * (delta * x * y - gamma * y);
+// Параметры брюсселятора
+const double a = 1.0;
+const double b = 3.0;
 
-    double k2_x = h * (alpha * (x + 0.5 * k1_x) - beta * (x + 0.5 * k1_x) * (y + 0.5 * k1_y));
-    double k2_y = h * (delta * (x + 0.5 * k1_x) * (y + 0.5 * k1_y) - gamma * (y + 0.5 * k1_y));
+// Функция для первого уравнения брюсселятора
+double f(double x, double y) {
+    return a - (b + 1) * x + x * x * y;
+}
 
-    double k3_x = h * (alpha * (x + 0.5 * k2_x) - beta * (x + 0.5 * k2_x) * (y + 0.5 * k2_y));
-    double k3_y = h * (delta * (x + 0.5 * k2_x) * (y + 0.5 * k2_y) - gamma * (y + 0.5 * k2_y));
+// Функция для второго уравнения брюсселятора
+double g(double x, double y) {
+    return b * x - x * x * y;
+}
 
-    double k4_x = h * (alpha * (x + k3_x) - beta * (x + k3_x) * (y + k3_y));
-    double k4_y = h * (delta * (x + k3_x) * (y + k3_y) - gamma * (y + k3_y));
+void rk4(double &x, double &y, double dt, double (*f)(double, double), double (*g)(double, double)) {
+    double k1, k2, k3, k4;
+    double l1, l2, l3, l4;
 
-    x += (k1_x + 2 * k2_x + 2 * k3_x + k4_x) / 6;
-    y += (k1_y + 2 * k2_y + 2 * k3_y + k4_y) / 6;
+    k1 = dt * f(x, y);
+    l1 = dt * g(x, y);
 
-    x_values.push_back(x);
-    y_values.push_back(y);
+    k2 = dt * f(x + dt / 2, y + l1 / 2);
+    l2 = dt * g(x + dt / 2, y + l1 / 2);
+
+    k3 = dt * f(x + dt / 2, y + l2 / 2);
+    l3 = dt * g(x + dt / 2, y + l2 / 2);
+
+    k4 = dt * f(x + dt, y + l3);
+    l4 = dt * g(x + dt, y + l3);
+
+    x = x + (1.0 / 6.0) * (k1 + 2 * k2 + 2 * k3 + k4);
+    y = y + (1.0 / 6.0) * (l1 + 2 * l2 + 2 * l3 + l4);
 }
 
 int main() {
-    double alpha = 1.0, beta = 2.0, delta = 1.0, gamma = 0.3;
-    double x = 1.0, y = 0.0;
-    double h = 0.01;
-    int steps = 1000;
+    double x = 0.0, y = 0.0;
+    double dt = 0.01;
 
-    std::vector<double> x_values, y_values;
+    std::vector<double> xs, ys;
 
-    for (int i = 0; i < steps; ++i) {
-        rk4(x, y, alpha, beta, delta, gamma, h, x_values, y_values);
+    for (int i = 0; i < 10000; i++) {
+        rk4(x, y, dt, f, g);
+        xs.push_back(x);
+        ys.push_back(y);
     }
 
-    std::ofstream file("brusselator_data.txt");
-    for (size_t i = 0; i < x_values.size(); ++i) {
-        file << x_values[i] << " " << y_values[i] << std::endl;
-    }
-    file.close();
+    // Преобразование векторов в numpy массивы для визуализации
+    PyObject* x_array = PyArray_SimpleNewFromData(1, &xs.size(), NPY_DOUBLE, (void*)xs.data());
+    PyObject* y_array = PyArray_SimpleNewFromData(1, &ys.size(), NPY_DOUBLE, (void*)ys.data());
 
-    std::cout << "Результаты сохранены в файл brusselator_data.txt" << std::endl;
+    // Визуализация
+    plt::plot(x_array, y_array);
+    plt::show();
+
+    // Освобождение памяти
+    Py_DECREF(x_array);
+    Py_DECREF(y_array);
 
     return 0;
 }

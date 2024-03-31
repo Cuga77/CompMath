@@ -1,9 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include <GLFW/glfw3.h>
+
 #include <GL/glew.h>
 #include <GL/gl.h>
+#include <GLFW/glfw3.h>
 #include <GL/glext.h>
 // compile: gcc -lm brussel.c -o br -lGL -lGLU -lglfw
 
@@ -55,13 +56,11 @@ void runge( void )
 }
 
 GLFWwindow* initOpenGL() {
-    // Initialize GLFW
     if (!glfwInit()) {
         fprintf(stderr, "Failed to initialize GLFW\n");
         return NULL;
     }
 
-    // Create a windowed mode window and its OpenGL context
     GLFWwindow* window = glfwCreateWindow(640, 480, "Brusselator Diffusion", NULL, NULL);
     if (!window) {
         fprintf(stderr, "Failed to open GLFW window\n");
@@ -69,16 +68,13 @@ GLFWwindow* initOpenGL() {
         return NULL;
     }
 
-    // Make the window's context current
     glfwMakeContextCurrent(window);
-
-    // Initialize GLEW
-    glewExperimental = GL_TRUE; // Needed for core profile
+    
+    glewExperimental = GL_TRUE;
     if (glewInit() != GLEW_OK) {
         fprintf(stderr, "Failed to initialize GLEW\n");
         return NULL;
     }
-
     return window;
 }
 
@@ -132,10 +128,9 @@ int main( void )
     }
     while (!glfwWindowShouldClose(window)) {
         runge();
-        glClear(GL_COLOR_BUFFER_BIT);
 
-        // Render the Brusselator's state here
-        // This involves mapping the values of xr, xv, yr, yv to colors and drawing them on the screen
+        glClear(GL_COLOR_BUFFER_BIT);
+        
         glfwSwapBuffers(window);
         glfwPollEvents();
     }

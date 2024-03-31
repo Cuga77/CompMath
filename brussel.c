@@ -1,8 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-
-// compile: gcc -lm brusselator.c -o brusselator
+#include <GLFW/glfw3.h>
+#include <GL/glew.h>
+#include <GL/gl.h>
+#include <GL/glext.h>
+// compile: gcc -lm brussel.c -o br -lGL -lGLU -lglfw
 
 double x00, y00, vx, vy, a, b, h;
 double *xr, *xv, *yr, *yv;
@@ -51,6 +54,34 @@ void runge( void )
     }
 }
 
+GLFWwindow* initOpenGL() {
+    // Initialize GLFW
+    if (!glfwInit()) {
+        fprintf(stderr, "Failed to initialize GLFW\n");
+        return NULL;
+    }
+
+    // Create a windowed mode window and its OpenGL context
+    GLFWwindow* window = glfwCreateWindow(640, 480, "Brusselator Diffusion", NULL, NULL);
+    if (!window) {
+        fprintf(stderr, "Failed to open GLFW window\n");
+        glfwTerminate();
+        return NULL;
+    }
+
+    // Make the window's context current
+    glfwMakeContextCurrent(window);
+
+    // Initialize GLEW
+    glewExperimental = GL_TRUE; // Needed for core profile
+    if (glewInit() != GLEW_OK) {
+        fprintf(stderr, "Failed to initialize GLEW\n");
+        return NULL;
+    }
+
+    return window;
+}
+
 int main( void )
 {
     FILE *f;
@@ -94,25 +125,24 @@ int main( void )
     free( yr );
     free( yv );
 
-//     f = popen( "gnuplot -p -e \"set terminal x11\"", "w" );
-//     if (f == NULL) {
-//         perror("popen");
-//         return 1;
-//     }
-    
-//     ( f, "set terminal wxt 0\n" );
-//     fprintf( f, "plot 'output.txt' u 1:2 t 'X(t)' w l,"
-//                 "'output.txt' u 1:4 t 'Y(t)' w l\n" );
-//     fprintf( f, "set terminal wxt 1\n" );
-//     fprintf( f, "plot 'output.txt' u 2:3 t 'X(XV)' w l\n" );
-//     fprintf( f, "set terminal wxt 2\n" );
-//     fprintf( f, "plot 'output.txt' u 4:5 t 'Y(YV)' w l\n" );
-//     fprintf( f, "set terminal wxt 3\n" );
-//     fprintf( f, "plot 'output.txt' u 2:4 t 'X(Y)' w l\n" );
-//     pclose( f );
-//     return 0;
-// }
+    //OpenGl
+    GLFWwindow* window = initOpenGL();
+    if (!window) {
+        return -1;
+    }
+    while (!glfwWindowShouldClose(window)) {
+        runge();
+        glClear(GL_COLOR_BUFFER_BIT);
 
+        // Render the Brusselator's state here
+        // This involves mapping the values of xr, xv, yr, yv to colors and drawing them on the screen
+        glfwSwapBuffers(window);
+        glfwPollEvents();
+    }
+    glfwTerminate();
+
+
+    // Gnuplot
     FILE *gnuplotScript = fopen("gnuplotScript.gp", "w");
     if (gnuplotScript == NULL) {
         perror("Error opening file");

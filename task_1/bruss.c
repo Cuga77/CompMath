@@ -168,7 +168,6 @@ int main( void )
     GLubyte* data = (GLubyte*)malloc(width * height * 3);
 
     GLuint texture = createTexture(width, height, GL_RGB, GL_UNSIGNED_BYTE, data);
-    free(texture);
     
     GLFWwindow* window = initOpenGL();
     if (!window) {

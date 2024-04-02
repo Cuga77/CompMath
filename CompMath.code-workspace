@@ -1,0 +1,27 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"launch": {
+		"configurations": [
+			{
+				"type": "cmake",
+				"request": "launch",
+				"name": "Debug portfile(s)",
+				"cmakeDebugType": "external",
+				"pipeName": "/tmp/vcpkg_ext_portfile_dbg",
+				"preLaunchTask": "Debug vcpkg commands"
+			}
+		]
+	},
+	"settings": {
+		"files.autoSave": "onFocusChange",
+		"editor.minimap.enabled": false,
+		"files.associations": {
+			"brussel.C": "cpp",
+			"cmath": "cpp"
+		}
+	}
+}

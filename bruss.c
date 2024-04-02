@@ -6,7 +6,7 @@
 #include <GL/gl.h>
 #include <GLFW/glfw3.h>
 #include <GL/glext.h>
-// compile: gcc -lm brussel.c -o br -lGL -lGLU -lglfw
+// compile: gcc -lm bruss.c -o br -lGL -lGLU -lglfw
 
 double x00, y00, vx, vy, a, b, h;
 double *xr, *xv, *yr, *yv;
@@ -78,11 +78,32 @@ GLFWwindow* initOpenGL() {
     return window;
 }
 
+GLuint createTexture(int width, int height, GLenum format, GLenum type, const void* data) {
+    GLuint texture;
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, type, data);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    return texture;
+}
+
+
+void drawTexture(GLuint texture, float x, float y, float width, float height) {
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glBegin(GL_QUADS);
+    glTexCoord2f(0.0f, 0.0f); glVertex2f(x, y);
+    glTexCoord2f(1.0f, 0.0f); glVertex2f(x + width, y);
+    glTexCoord2f(1.0f, 1.0f); glVertex2f(x + width, y + height);
+    glTexCoord2f(0.0f, 1.0f); glVertex2f(x, y + height);
+    glEnd();
+}
+
 int main( void )
 {
     FILE *f;
     int i;
-
+    
     printf( ">> Enter N: " );
     scanf( "%d", &N );
     printf( ">> Enter h: " );
@@ -93,10 +114,12 @@ int main( void )
     scanf( "%lf %lf", &x00, &y00 );
     printf( ">> Enter xv, yv: " );
     scanf( "%lf %lf", &vx, &vy );
+
     xr = (double *) malloc( N * sizeof(double) );
     xv = (double *) malloc( N * sizeof(double) );
     yr = (double *) malloc( N * sizeof(double) );
     yv = (double *) malloc( N * sizeof(double) );
+
     puts( ">> Calculate..." );
     runge();
     puts( ">> Done" );
@@ -116,12 +139,37 @@ int main( void )
     if ( f != stdout ) {
         fclose( f );
     }
+
+    GLubyte* textureData = (GLubyte*)malloc(N * 3); // 3 для RGB
+    for (int i = 0; i < N; i++) {
+        // Нормализация значений xr и yr в диапазон [0, 255]
+        GLubyte xrValue = (GLubyte)(xr[i] * 255);
+        GLubyte yrValue = (GLubyte)(yr[i] * 255);
+        // Присвоение значения всем каналам RGB для простоты
+        textureData[i * 3] = xrValue;     // Red
+        textureData[i * 3 + 1] = yrValue; // Green
+        textureData[i * 3 + 2] = 0;       // Blue, можно использовать для дополнительной информации
+    }
+
     free( xr );
     free( xv );
     free( yr );
     free( yv );
 
     //OpenGl
+    glewExperimental = GL_TRUE;
+    if (glewInit() != GLEW_OK) {
+        fprintf(stderr, "Failed to initialize GLEW\n");
+        return -1;
+    }
+    
+    int width = 640; 
+    int height = 480; 
+    GLubyte* data = (GLubyte*)malloc(width * height * 3);
+
+    GLuint texture = createTexture(width, height, GL_RGB, GL_UNSIGNED_BYTE, data);
+    free(texture);
+    
     GLFWwindow* window = initOpenGL();
     if (!window) {
         return -1;
@@ -130,37 +178,41 @@ int main( void )
         runge();
 
         glClear(GL_COLOR_BUFFER_BIT);
+
+        drawTexture(texture, 0.0f, 0.0f, width, height);
         
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
     glfwTerminate();
+    
+    free(data);
 
 
-    // Gnuplot
-    FILE *gnuplotScript = fopen("gnuplotScript.gp", "w");
-    if (gnuplotScript == NULL) {
-        perror("Error opening file");
-        return 1;
-    }
+    // // Gnuplot
+    // FILE *gnuplotScript = fopen("gnuplotScript.gp", "w");
+    // if (gnuplotScript == NULL) {
+    //     perror("Error opening file");
+    //     return 1;
+    // }
 
-    // Запись команд в скрипт
-    fprintf(gnuplotScript, "set terminal x11\n");
-    fprintf(gnuplotScript, "plot 'output.txt' u 1:2 t 'X(t)' w l, 'output.txt' u 1:4 t 'Y(t)' w l\n");
-    fprintf(gnuplotScript, "set terminal x11 1\n");
-    fprintf(gnuplotScript, "plot 'output.txt' u 2:3 t 'X(XV)' w l\n");
-    fprintf(gnuplotScript, "set terminal x11 2\n");
-    fprintf(gnuplotScript, "plot 'output.txt' u 4:5 t 'Y(YV)' w l\n");
-    fprintf(gnuplotScript, "set terminal x11 3\n");
-    fprintf(gnuplotScript, "plot 'output.txt' u 2:4 t 'X(Y)' w l\n");
-    fprintf(gnuplotScript, "pause -1 'Press Enter to close'\n");
-    fclose(gnuplotScript);
+    // // Запись команд в скрипт
+    // fprintf(gnuplotScript, "set terminal x11\n");
+    // fprintf(gnuplotScript, "plot 'output.txt' u 1:2 t 'X(t)' w l, 'output.txt' u 1:4 t 'Y(t)' w l\n");
+    // fprintf(gnuplotScript, "set terminal x11 1\n");
+    // fprintf(gnuplotScript, "plot 'output.txt' u 2:3 t 'X(XV)' w l\n");
+    // fprintf(gnuplotScript, "set terminal x11 2\n");
+    // fprintf(gnuplotScript, "plot 'output.txt' u 4:5 t 'Y(YV)' w l\n");
+    // fprintf(gnuplotScript, "set terminal x11 3\n");
+    // fprintf(gnuplotScript, "plot 'output.txt' u 2:4 t 'X(Y)' w l\n");
+    // fprintf(gnuplotScript, "pause -1 'Press Enter to close'\n");
+    // fclose(gnuplotScript);
 
-    // Запуск Gnuplot с временным скриптом
-    system("gnuplot gnuplotScript.gp");
+    // // Запуск Gnuplot с временным скриптом
+    // system("gnuplot gnuplotScript.gp");
 
-    // Удаление временного файла
-    remove("gnuplotScript.gp");
+    // // Удаление временного файла
+    // remove("gnuplotScript.gp");
 
     return 0;
 }

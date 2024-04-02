@@ -2,6 +2,11 @@
 #include <iostream>
 #include <cmath>
 
+// compile: g++ -std=c++11 -o brusselator brusselator.cpp -lsfml-graphics -lsfml-window -lsfml-system
+
+// g++ -c brusselator.cpp -o brusselator.o
+// g++ brusselator.o -o brusselator -lsfml-graphics -lsfml-window -lsfml-system
+
 // Размеры окна
 const int WINDOW_WIDTH = 800;
 const int WINDOW_HEIGHT = 600;
@@ -13,14 +18,20 @@ double h = 0.01;
 double x00 = 0.0, y00 = 0.0, vx = 0.0, vy = 0.0;
 int N = 1000;
 
+// Параметры диффузии
+double D = 0.1;
+double dt = 0.01;
+double dx = 0.1;
+double dy = 0.1;  
+
 double* xr, *xv, *yr, *yv;
 
 double X(double x, double y) {
-    return a - (b + 1) * x + pow(x, 2) * y;
+    return a - (b + 1) * x + x * x * y;
 }
 
 double Y(double x, double y) {
-    return b * x - pow(x, 2) * y;
+    return b * x - x * x * y;
 }
 
 void runge() {
@@ -55,6 +66,21 @@ void runge() {
     }
 }
 
+void updateConcentration(double* concentration, double D, double dt, double dx, double dy) {
+    double* newConcentration = new double[WINDOW_WIDTH * WINDOW_HEIGHT];
+
+    for (int x = 1; x < WINDOW_WIDTH - 1; ++x) {
+        for (int y = 1; y < WINDOW_HEIGHT - 1; ++y) {
+            int index = y * WINDOW_WIDTH + x;
+            double laplacian = concentration[index - WINDOW_WIDTH] + concentration[index + WINDOW_WIDTH] + concentration[index - 1] + concentration[index + 1] - 4 * concentration[index];
+            newConcentration[index] = concentration[index] + D * dt * laplacian / (dx * dy);
+        }
+    }
+
+    memcpy(concentration, newConcentration, WINDOW_WIDTH * WINDOW_HEIGHT * sizeof(double));
+    delete[] newConcentration;
+}
+
 int main() {
     // Инициализация SFML
     sf::RenderWindow window(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "Brusselator Diffusion with SFML");
@@ -77,6 +103,8 @@ int main() {
     yr = (double*)malloc(N * sizeof(double));
     yv = (double*)malloc(N * sizeof(double));
 
+    int frame = 0;
+
     // Главный цикл
     while (window.isOpen()) {
         sf::Event event;
@@ -88,6 +116,9 @@ int main() {
 
         // Обновление состояния системы
         runge();
+
+        // Обновление массива концентрации на основе результатов runge()
+        updateConcentration(concentration, D, dt, dx, dy);
 
         // Обновление массива концентрации на основе результатов runge()
         for (int i = 0; i < N; ++i) {
@@ -104,6 +135,10 @@ int main() {
         sf::Uint8* pixels = new sf::Uint8[WINDOW_WIDTH * WINDOW_HEIGHT * 4];
         for (int i = 0; i < WINDOW_WIDTH * WINDOW_HEIGHT; ++i) {
             double value = concentration[i];
+
+            sf::Uint8 color = static_cast<sf::Uint8>(value * 255);
+            sf::Uint8 animatedColor = static_cast<sf::Uint8>((color + frame) % 256);
+
             pixels[i * 4 + 0] = static_cast<sf::Uint8>(value * 255); // Red
             pixels[i * 4 + 1] = static_cast<sf::Uint8>(value * 255); // Green
             pixels[i * 4 + 2] = static_cast<sf::Uint8>(value * 255); // Blue
@@ -111,6 +146,8 @@ int main() {
         }
         texture.update(pixels);
         delete[] pixels;
+
+        frame++;
 
         window.clear();
         window.draw(sprite);

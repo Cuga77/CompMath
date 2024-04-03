@@ -1,26 +1,27 @@
 #include <SFML/Graphics.hpp>
 #include <iostream>
+#include <cstring>
 #include <cmath>
 
-// compile: g++ -std=c++11 -o brusselator brusselator.cpp -lsfml-graphics -lsfml-window -lsfml-system
+// compile: g++ -o brusselator brusselator.cpp -lsfml-graphics -lsfml-window -lsfml-system
 
 // g++ -c brusselator.cpp -o brusselator.o
 // g++ brusselator.o -o brusselator -lsfml-graphics -lsfml-window -lsfml-system
 
 // Размеры окна
-const int WINDOW_WIDTH = 800;
+const int WINDOW_WIDTH = 600;
 const int WINDOW_HEIGHT = 600;
 
 // Параметры брюсселятора
-double a = 1.0;
-double b = 3.0;
+double a = 3.0;
+double b = 12.0;
 double h = 0.01;
 double x00 = 0.0, y00 = 0.0, vx = 0.0, vy = 0.0;
 int N = 1000;
 
 // Параметры диффузии
 double D = 0.1;
-double dt = 0.01;
+double dt = 0.00001;
 double dx = 0.1;
 double dy = 0.1;  
 
@@ -135,13 +136,14 @@ int main() {
         sf::Uint8* pixels = new sf::Uint8[WINDOW_WIDTH * WINDOW_HEIGHT * 4];
         for (int i = 0; i < WINDOW_WIDTH * WINDOW_HEIGHT; ++i) {
             double value = concentration[i];
+            double normalizedValue = value / 255.0; 
 
-            sf::Uint8 color = static_cast<sf::Uint8>(value * 255);
-            sf::Uint8 animatedColor = static_cast<sf::Uint8>((color + frame) % 256);
-
-            pixels[i * 4 + 0] = static_cast<sf::Uint8>(value * 255); // Red
-            pixels[i * 4 + 1] = static_cast<sf::Uint8>(value * 255); // Green
-            pixels[i * 4 + 2] = static_cast<sf::Uint8>(value * 255); // Blue
+            sf::Uint8 red = static_cast<sf::Uint8>(normalizedValue * 255);
+            sf::Uint8 green = static_cast<sf::Uint8>((1 - normalizedValue) * 255);
+            sf::Uint8 blue = 0; // Для создания градиента от синего к красному
+            pixels[i * 4 + 0] = red;
+            pixels[i * 4 + 1] = green;
+            pixels[i * 4 + 2] = blue;
             pixels[i * 4 + 3] = 255; // Alpha
         }
         texture.update(pixels);

@@ -22,7 +22,11 @@ int N = 1000;
 double D = 0.1;
 double dt = 0.01;
 double dx = 0.1;
-double dy = 0.1;  
+double dy = 0.1; 
+double intensity = 1.0;
+
+//Параметры изображения
+double frame = 0.0;
 
 double* xr, *xv, *yr, *yv;
 
@@ -103,8 +107,6 @@ int main() {
     yr = (double*)malloc(N * sizeof(double));
     yv = (double*)malloc(N * sizeof(double));
 
-    int frame = 0;
-
     // Главный цикл
     while (window.isOpen()) {
         sf::Event event;
@@ -121,12 +123,16 @@ int main() {
         updateConcentration(concentration, D, dt, dx, dy);
 
         // Обновление массива концентрации на основе результатов runge()
-        for (int i = 0; i < N; ++i) {
-            double intensity = xr[i]; // Используем xr как интенсивность
-            for (int x = 0; x < WINDOW_WIDTH; ++x) {
-                for (int y = 0; y < WINDOW_HEIGHT; ++y) {
-                    int index = y * WINDOW_WIDTH + x;
-                    concentration[index] = intensity; // Обновляем концентрацию
+        for (int x = 0; x < WINDOW_WIDTH; ++x) {
+            for (int y = 0; y < WINDOW_HEIGHT; ++y) {
+                int index = y * WINDOW_WIDTH + x;
+
+                if (x == 0 || y == 0 || x == WINDOW_WIDTH - 1 || y == WINDOW_HEIGHT - 1) {
+                    // Условия Дирихле: функция равна нулю на границе
+                    concentration[index] = 0;
+                } else {
+                    // Обновляем концентрацию
+                    concentration[index] = intensity;
                 }
             }
         }
@@ -137,12 +143,24 @@ int main() {
             double value = concentration[i];
 
             sf::Uint8 color = static_cast<sf::Uint8>(value * 255);
-            sf::Uint8 animatedColor = static_cast<sf::Uint8>((color + frame) % 256);
+            sf::Uint8 animatedColor = static_cast<sf::Uint8>((color + static_cast<sf::Uint8>(128 * (1 + sin(frame / 50.0)))) % 256);   
 
-            pixels[i * 4 + 0] = static_cast<sf::Uint8>(value * 255); // Red
-            pixels[i * 4 + 1] = static_cast<sf::Uint8>(value * 255); // Green
-            pixels[i * 4 + 2] = static_cast<sf::Uint8>(value * 255); // Blue
-            pixels[i * 4 + 3] = 255; // Alpha
+            // Используем цветовую карту для отображения различных уровней концентрации
+            sf::Color colorMap = sf::Color::Black;
+            if (value < 0.25) {
+                colorMap = sf::Color::Blue;
+            } else if (value < 0.5) {
+                colorMap = sf::Color::Green;    
+            } else if (value < 0.75) {
+                colorMap = sf::Color::Yellow;
+            } else {
+                colorMap = sf::Color::Red;
+            }
+
+            pixels[i * 4 + 0] = colorMap.r;
+            pixels[i * 4 + 1] = colorMap.g;
+            pixels[i * 4 + 2] = colorMap.b;
+            pixels[i * 4 + 3] = 255; 
         }
         texture.update(pixels);
         delete[] pixels;

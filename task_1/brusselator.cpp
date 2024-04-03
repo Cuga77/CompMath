@@ -1,29 +1,27 @@
 #include <SFML/Graphics.hpp>
 #include <iostream>
+#include <cstring>
 #include <cmath>
 
-// compile: g++ -std=c++11 -o brusselator brusselator.cpp -lsfml-graphics -lsfml-window -lsfml-system
-
-// g++ -c brusselator.cpp -o brusselator.o
-// g++ brusselator.o -o brusselator -lsfml-graphics -lsfml-window -lsfml-system
+// compile: g++ -o brusselator brusselator.cpp -lsfml-graphics -lsfml-window -lsfml-system
 
 // Размеры окна
-const int WINDOW_WIDTH = 800;
-const int WINDOW_HEIGHT = 600;
+const int WINDOW_WIDTH = 100;
+const int WINDOW_HEIGHT = 100;
 
 // Параметры брюсселятора
-double a = 1.0;
-double b = 3.0;
-double h = 0.01;
-double x00 = 0.0, y00 = 0.0, vx = 0.0, vy = 0.0;
-int N = 1000;
+double a = 3.0;
+double b = 12.0;
+double h = 0.1;
+double x00 = 0.0, y00 = 0.0, vx = 1.0, vy = 1.0;
+int N = 10;
 
 // Параметры диффузии
-double D = 0.1;
-double dt = 0.01;
+double D = 0.9;
+double dt = 0.1;
 double dx = 0.1;
 double dy = 0.1; 
-double intensity = 1.0;
+double intensity = 0.9;
 
 //Параметры изображения
 double frame = 0.0;
@@ -87,28 +85,24 @@ void updateConcentration(double* concentration, double D, double dt, double dx, 
 }
 
 int main() {
-    // Инициализация SFML
     sf::RenderWindow window(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "Brusselator Diffusion with SFML");
 
-    // Создание текстуры для визуализации
     sf::Texture texture;
     texture.create(WINDOW_WIDTH, WINDOW_HEIGHT);
     sf::Sprite sprite(texture);
 
-    // Создание массива для хранения значений концентрации
+
     double* concentration = new double[WINDOW_WIDTH * WINDOW_HEIGHT];
-    // Инициализация значений концентрации
     for (int i = 0; i < WINDOW_WIDTH * WINDOW_HEIGHT; ++i) {
-        concentration[i] = 0.0;
+        concentration[i] += 1.0;
     }
 
-    // Выделение памяти для хранения результатов
     xr = (double*)malloc(N * sizeof(double));
     xv = (double*)malloc(N * sizeof(double));
     yr = (double*)malloc(N * sizeof(double));
     yv = (double*)malloc(N * sizeof(double));
 
-    // Главный цикл
+
     while (window.isOpen()) {
         sf::Event event;
         while (window.pollEvent(event)) {
@@ -117,7 +111,7 @@ int main() {
             }
         }
 
-        // Обновление состояния системы
+        //Обновление системы
         runge();
 
         // Обновление массива концентрации на основе результатов runge()
@@ -142,18 +136,17 @@ int main() {
         sf::Uint8* pixels = new sf::Uint8[WINDOW_WIDTH * WINDOW_HEIGHT * 4];
         for (int i = 0; i < WINDOW_WIDTH * WINDOW_HEIGHT; ++i) {
             double value = concentration[i];
-
+            double normalizedValue = value / 255.0; 
             sf::Uint8 color = static_cast<sf::Uint8>(value * 255);
-            sf::Uint8 animatedColor = static_cast<sf::Uint8>((color + static_cast<sf::Uint8>(128 * (1 + sin(frame / 50.0)))) % 256);   
+            // sf::Uint8 animatedColor = static_cast<sf::Uint8>((color + frame) % 256);
+            sf::Uint8 animatedColor = static_cast<sf::Uint8>((color + sf::Uint8(128 * (1 + sin(frame / 50.0)))) % 256);   
 
             // Используем цветовую карту для отображения различных уровней концентрации
             sf::Color colorMap = sf::Color::Black;
             if (value < 0.25) {
                 colorMap = sf::Color::Blue;
-            } else if (value < 0.5) {
-                colorMap = sf::Color::Green;    
             } else if (value < 0.75) {
-                colorMap = sf::Color::Yellow;
+                colorMap = sf::Color::Green;    
             } else {
                 colorMap = sf::Color::Red;
             }

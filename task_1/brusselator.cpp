@@ -17,11 +17,11 @@ double x00 = 0.0, y00 = 0.0, vx = 1.0, vy = 1.0;
 int N = 10;
 
 // Параметры диффузии
-double D = 1.1;
+double D = 0.9;
 double dt = 0.1;
 double dx = 0.1;
 double dy = 0.1; 
-double intensity = 1.0;
+double intensity = 0.9;
 
 //Параметры изображения
 double frame = 0.0;
@@ -137,17 +137,15 @@ int main() {
             double value = concentration[i];
             double normalizedValue = value / 255.0; 
             sf::Uint8 color = static_cast<sf::Uint8>(value * 255);
-            sf::Uint8 animatedColor = static_cast<sf::Uint8>((color + frame) % 256);
-            // sf::Uint8 animatedColor = static_cast<sf::Uint8>((color + (128 * (1 + sin(frame / 50.0)))) % 256);   
+            // sf::Uint8 animatedColor = static_cast<sf::Uint8>((color + frame) % 256);
+            sf::Uint8 animatedColor = static_cast<sf::Uint8>((color + sf::Uint8(128 * (1 + sin(frame / 50.0)))) % 256);   
 
             // Используем цветовую карту для отображения различных уровней концентрации
             sf::Color colorMap = sf::Color::Black;
             if (value < 0.25) {
                 colorMap = sf::Color::Blue;
-            } else if (value < 0.5) {
-                colorMap = sf::Color::Green;    
             } else if (value < 0.75) {
-                colorMap = sf::Color::Yellow;
+                colorMap = sf::Color::Green;    
             } else {
                 colorMap = sf::Color::Red;
             }

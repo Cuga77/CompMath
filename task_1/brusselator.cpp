@@ -76,6 +76,7 @@ void updateConcentration(double* concentration, double D, double dt, double dx, 
     for (int x = 1; x < WINDOW_WIDTH - 1; ++x) {
         for (int y = 1; y < WINDOW_HEIGHT - 1; ++y) {
             int index = y * WINDOW_WIDTH + x;
+
             double laplacian = concentration[index - WINDOW_WIDTH] + concentration[index + WINDOW_WIDTH] + concentration[index - 1] + concentration[index + 1] - 4 * concentration[index];
             newConcentration[index] = concentration[index] + D * dt * laplacian / (dx * dy);
         }
@@ -132,7 +133,7 @@ int main() {
                     concentration[index] = 0;
                 } else {
                     // Обновляем концентрацию
-                    concentration[index] = intensity;
+                    concentration[index] = xr[index] + xv[index] + yr[index] + yv[index];;
                 }
             }
         }

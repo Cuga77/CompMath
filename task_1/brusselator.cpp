@@ -84,28 +84,24 @@ void updateConcentration(double* concentration, double D, double dt, double dx, 
 }
 
 int main() {
-    // Инициализация SFML
     sf::RenderWindow window(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "Brusselator Diffusion with SFML");
 
-    // Создание текстуры для визуализации
     sf::Texture texture;
     texture.create(WINDOW_WIDTH, WINDOW_HEIGHT);
     sf::Sprite sprite(texture);
 
-    // Создание массива для хранения значений концентрации
+
     double* concentration = new double[WINDOW_WIDTH * WINDOW_HEIGHT];
-    // Инициализация значений концентрации
     for (int i = 0; i < WINDOW_WIDTH * WINDOW_HEIGHT; ++i) {
-        concentration[i] = 0.0;
+        concentration[i] += 1.0;
     }
 
-    // Выделение памяти для хранения результатов
     xr = (double*)malloc(N * sizeof(double));
     xv = (double*)malloc(N * sizeof(double));
     yr = (double*)malloc(N * sizeof(double));
     yv = (double*)malloc(N * sizeof(double));
 
-    // Главный цикл
+
     while (window.isOpen()) {
         sf::Event event;
         while (window.pollEvent(event)) {
@@ -114,7 +110,7 @@ int main() {
             }
         }
 
-        // Обновление состояния системы
+        //Обновление системы
         runge();
 
         // Обновление массива концентрации на основе результатов runge()
@@ -141,7 +137,8 @@ int main() {
             double value = concentration[i];
             double normalizedValue = value / 255.0; 
             sf::Uint8 color = static_cast<sf::Uint8>(value * 255);
-            sf::Uint8 animatedColor = static_cast<sf::Uint8>((color + static_cast<sf::Uint8>(128 * (1 + sin(frame / 50.0)))) % 256);   
+            sf::Uint8 animatedColor = static_cast<sf::Uint8>((color + frame) % 256);
+            // sf::Uint8 animatedColor = static_cast<sf::Uint8>((color + (128 * (1 + sin(frame / 50.0)))) % 256);   
 
             // Используем цветовую карту для отображения различных уровней концентрации
             sf::Color colorMap = sf::Color::Black;

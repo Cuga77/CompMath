@@ -5,23 +5,20 @@
 
 // compile: g++ -o brusselator brusselator.cpp -lsfml-graphics -lsfml-window -lsfml-system
 
-// g++ -c brusselator.cpp -o brusselator.o
-// g++ brusselator.o -o brusselator -lsfml-graphics -lsfml-window -lsfml-system
-
 // Размеры окна
-const int WINDOW_WIDTH = 600;
-const int WINDOW_HEIGHT = 600;
+const int WINDOW_WIDTH = 100;
+const int WINDOW_HEIGHT = 100;
 
 // Параметры брюсселятора
 double a = 3.0;
 double b = 12.0;
-double h = 0.01;
-double x00 = 0.0, y00 = 0.0, vx = 0.0, vy = 0.0;
-int N = 1000;
+double h = 0.1;
+double x00 = 0.0, y00 = 0.0, vx = 1.0, vy = 1.0;
+int N = 10;
 
 // Параметры диффузии
-double D = 0.1;
-double dt = 0.00001;
+double D = 1.1;
+double dt = 0.1;
 double dx = 0.1;
 double dy = 0.1; 
 double intensity = 1.0;

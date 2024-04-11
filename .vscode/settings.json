@@ -1,3 +1,6 @@
 {
-    "cmake.sourceDirectory": "/home/cuga/CompMath"
+    "cmake.sourceDirectory": "/home/cuga/CompMath",
+    "files.associations": {
+        "new": "cpp"
+    }
 }

@@ -6,15 +6,16 @@
 // compile: g++ -o brusselator brusselator.cpp -lsfml-graphics -lsfml-window -lsfml-system
 
 // Размеры окна
-const int WINDOW_WIDTH = 100;
-const int WINDOW_HEIGHT = 100;
+u_int64_t WINDOW_WIDTH = 150;
+u_int64_t WINDOW_HEIGHT = 150;
 
 // Параметры брюсселятора
-double a = 3.0;
-double b = 12.0;
-double h = 0.1;
-double x00 = 0.0, y00 = 0.0, vx = 1.0, vy = 1.0;
-int N = 10;
+double a = 1.0;
+double b = 4.0;
+double b1 = b+1;
+double h = 0.00001;
+double x00 = 0.0, y00 = 0.0, vx = 2.0, vy = 1.5;
+int N = 100;
 
 // Параметры диффузии
 double D = 0.9;
@@ -29,7 +30,7 @@ double frame = 0.0;
 double* xr, *xv, *yr, *yv;
 
 double X(double x, double y) {
-    return a - (b + 1) * x + x * x * y;
+    return a - b1 * x + x * x * y;
 }
 
 double Y(double x, double y) {
@@ -74,7 +75,6 @@ void updateConcentration(double* concentration, double D, double dt, double dx, 
     for (int x = 1; x < WINDOW_WIDTH - 1; ++x) {
         for (int y = 1; y < WINDOW_HEIGHT - 1; ++y) {
             int index = y * WINDOW_WIDTH + x;
-
             double laplacian = concentration[index - WINDOW_WIDTH] + concentration[index + WINDOW_WIDTH] + concentration[index - 1] + concentration[index + 1] - 4 * concentration[index];
             newConcentration[index] = concentration[index] + D * dt * laplacian / (dx * dy);
         }
@@ -127,7 +127,7 @@ int main() {
                     concentration[index] = 0;
                 } else {
                     // Обновляем концентрацию
-                    concentration[index] = xr[index] + xv[index] + yr[index] + yv[index];;
+                    concentration[index] = xr[index] + xv[index] + yr[index] + yv[index];
                 }
             }
         }
@@ -143,10 +143,8 @@ int main() {
 
             // Используем цветовую карту для отображения различных уровней концентрации
             sf::Color colorMap = sf::Color::Black;
-            if (value < 0.25) {
-                colorMap = sf::Color::Blue;
-            } else if (value < 0.75) {
-                colorMap = sf::Color::Green;    
+            if (value < 0.5) {
+                colorMap = sf::Color::Blue;    
             } else {
                 colorMap = sf::Color::Red;
             }

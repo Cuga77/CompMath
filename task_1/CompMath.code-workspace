@@ -7,21 +7,17 @@
 	"launch": {
 		"configurations": [
 			{
-				"type": "cmake",
+				"type": "node",
 				"request": "launch",
-				"name": "Debug portfile(s)",
-				"cmakeDebugType": "external",
-				"pipeName": "/tmp/vcpkg_ext_portfile_dbg",
-				"preLaunchTask": "Debug vcpkg commands"
+				"name": "Debug portfile(s)"
 			}
 		]
 	},
 	"settings": {
-		"files.autoSave": "onFocusChange",
+		"files.autoSave": "afterDelay",
 		"editor.minimap.enabled": false,
 		"files.associations": {
-			"brussel.C": "cpp",
-			"cmath": "cpp"
+			"cpp": "cpp"
 		}
 	}
 }

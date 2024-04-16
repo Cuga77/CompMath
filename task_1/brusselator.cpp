@@ -89,7 +89,6 @@ int main() {
 
 
     sf::RenderWindow window(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "Brusselator Diffusion with SFML");
-
     sf::Texture texture;
     texture.create(WINDOW_WIDTH, WINDOW_HEIGHT);
     sf::Sprite sprite(texture);
@@ -120,10 +119,10 @@ int main() {
         // Обновление массива концентрации на основе результатов runge()
         updateConcentration(concentration, D, dt, dx, dy);
 
-        // Обновление массива концентрации на основе результатов runge()
-        for (int x = 0; x < WINDOW_WIDTH; ++x) {
-            for (int y = 0; y < WINDOW_HEIGHT; ++y) {
-                int index = y * WINDOW_WIDTH + x;
+        // // Обновление массива концентрации на основе результатов runge()
+        // for (int x = 0; x < WINDOW_WIDTH; ++x) {
+        //     for (int y = 0; y < WINDOW_HEIGHT; ++y) {
+        //         int index = y * WINDOW_WIDTH + x;
 
                 if (x == 0 || y == 0 || x == WINDOW_WIDTH - 1 || y == WINDOW_HEIGHT - 1) {
                     // Условия Дирихле: функция равна нулю на границе

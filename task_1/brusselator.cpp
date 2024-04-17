@@ -5,18 +5,18 @@
 
 #include <SFML/Graphics.hpp>
 
-// compile: g++ -o brusselator brusselator.cpp && .\a.exe || ./a.out
+// compile: g++ brusselator.cpp && ./a.out && /bin/python3 /home/cuga/CompMath/task_1/visualisation.py
 
 // Размеры окна
-const int WINDOW_WIDTH = 200;
-const int WINDOW_HEIGHT = 200;
+const int WINDOW_WIDTH = 100;
+const int WINDOW_HEIGHT = 100;
 
 // Параметры брюсселятора
-double a = 2.9;
-double b = 1.3;
+double a = 2.0;
+double b = 4.0;
 double b1 = b + 1;
-double h = 0.001;
-int N = 1000;
+double h = 0.0001;
+int N = 10000;
 
 //Инициализация начальных значений
 double **x, **y, **vx, **vy;
@@ -67,6 +67,27 @@ void rk4(double** x, double** y, double** vx, double** vy, double dt) {
     }
 }
 
+void compute_diffusion(double** arr, double D, double dt, double dx, double dy) {
+    double** temp = new double*[WINDOW_WIDTH];
+    for (int i = 0; i < WINDOW_WIDTH; i++) {
+        temp[i] = new double[WINDOW_HEIGHT];
+        memcpy(temp[i], arr[i], WINDOW_HEIGHT * sizeof(double));
+    }
+
+    for (int i = 1; i < WINDOW_WIDTH - 1; i++) {
+        for (int j = 1; j < WINDOW_HEIGHT - 1; j++) {
+            double diff_x = (temp[i - 1][j] - 2 * temp[i][j] + temp[i + 1][j]) / (dx * dx);
+            double diff_y = (temp[i][j - 1] - 2 * temp[i][j] + temp[i][j + 1]) / (dy * dy);
+            arr[i][j] += D * dt * (diff_x + diff_y);
+        }
+    }
+
+    for (int i = 0; i < WINDOW_WIDTH; i++) {
+        delete[] temp[i];
+    }
+    delete[] temp;
+}
+
 int main() {
 
     //Параметры диффузии
@@ -97,13 +118,18 @@ int main() {
     
     // Обновление системы в цикле
     for (int i = 0; i < WINDOW_WIDTH; i++) {
-        for (int j = 0; j < WINDOW_HEIGHT; j++) {
-            // Обновление значений с помощью метода Рунге-Кутты
-            rk4(x, y, vx, vy, dt);
-            // Запись текущих значений в файл
-            file << x[i][j] << " " << y[i][j] << " " << vx[i][j] << " " << vy[i][j] << "\n";
-        }
+    for (int j = 0; j < WINDOW_HEIGHT; j++) {
+        // Обновление значений с помощью метода Рунге-Кутты
+        rk4(x, y, vx, vy, dt);
+        // Вычисление диффузии
+        // compute_diffusion(x, D, dt, dx, dy);
+        // compute_diffusion(y, D, dt, dx, dy);
+        // compute_diffusion(vx, D, dt, dx, dy);
+        // compute_diffusion(vy, D, dt, dx, dy);
+        // Запись текущих значений в файл
+        file << x[i][j] << " " << y[i][j] << " " << vx[i][j] << " " << vy[i][j] << "\n";
     }
+}
 
     for (int i = 0; i < WINDOW_WIDTH; i++) {
         delete[] x[i];

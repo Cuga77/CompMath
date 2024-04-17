@@ -5,14 +5,14 @@ import random
 from scipy.ndimage.interpolation import rotate
 
 
-'''Definition der Laufvariablen'''
+'''Определение переменных'''
 t_tot = 300
 dt = 0.01
 l = 200
 t = np.arange(0, t_tot+0.01, dt)
 n = len(t)
 
-'''Nebenbedingungsmatrix erstellen'''
+'''Матрица ограничений'''
 
 A = np.empty(shape=(l, l), dtype=float)
 B = np.empty(shape=(l, l), dtype=float)
@@ -33,11 +33,11 @@ B[:, :] = 3
 #B[:,:] = B_in
 #B = rotate(B,angle=90)
 
-'''Arrays fuer die beiden Konzentrationen: (Zeit, y-Laenge, x-Laenge)'''
+'''Массивы для двух концентраций: (time, y-length, x-length)'''
 Cx = np.empty(shape=(l, l), dtype=float)
 Cy = np.empty(shape=(l, l), dtype=float)
 
-'''Verschobene Konzentrationsarrays fuer die Diffusion'''
+'''Сдвинутые концентрационные массивы для диффузии'''
 Cx_oben = np.empty(shape=(l, l), dtype=float)
 Cx_unten = np.empty(shape=(l, l), dtype=float)
 Cx_links = np.empty(shape=(l, l), dtype=float)
@@ -55,7 +55,7 @@ k2 = 1.0
 k3 = 1.0
 k4 = 1.0
 
-'''Diffusionskoeffizientenmatrix erstellen'''
+'''Создание матрицы коэффициентов диффузии'''
 
 Dx = np.empty(shape=(l, l), dtype=float)
 Dy = np.empty(shape=(l, l), dtype=float)
@@ -80,7 +80,7 @@ Dy[:,:] = 0.2
 
 betrachtungsintervall = 10
 
-'''Einlesen der Startkonzentrationen (optionale wenn benötigt)'''
+'''Чтение стартовых значний концентрации (не обязательно)'''
 Cx[:, :] = A
 Cy[:, :] = B/A
 

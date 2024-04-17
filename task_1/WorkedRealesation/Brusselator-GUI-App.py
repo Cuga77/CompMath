@@ -9,7 +9,7 @@ import random
 
 t_tot = 500
 dt = 0.05
-l_tot = 200  # Breite
+l_tot = 200  # Ширина
 n = len(np.arange(0, t_tot + 0.01, dt))
 t = np.arange(0, t_tot + 0.01, dt)
 
@@ -29,7 +29,7 @@ Cx[:, :] = (k1*A)/k2
 plt.ion()
 
 
-def var_initialisieren():
+def var_inital():
     global t_tot,dt,l_tot,n,t,A,B,k1,k2,k3,k4,stop_var,betrachtungsintervall,Dx,Dy,Cx_oben,Cx_unten,Cx_links,Cx_rechts,Cy_oben,Cy_unten,Cy_links,Cy_rechts,Cx_diff_gesamt,Cy_diff_gesamt,Cx0,Cy0
     Cx = np.ones(shape=(l_tot + 1, l_tot + 1), dtype=float)
     Cy = np.ones(shape=(l_tot + 1, l_tot + 1), dtype=float)
@@ -290,7 +290,7 @@ def berechnung_C_ist_C0():
             break
     return
 
-def berechnung_periodisch():
+def calculation_periodic():
     werte_annehmen()
     global Cx0, Cy0, Cx, Cy, Cx_oben, Cx_unten, Cx_links, Cx_rechts, Cx_diff_gesamt, Cy_diff_gesamt, Cy_oben, Cy_unten, Cy_links, Cy_rechts
 
@@ -591,7 +591,7 @@ def about():
 
 tk.Button(window, text="Start mit dC=0 RB", width=20, command=berechnung_dC_ist_0, bg="white").place(x=spalte1+20, y=Zeilenabstand*16.5)
 tk.Button(window, text="Start mit C=C0 RB", width=20, command=berechnung_C_ist_C0, bg="white").place(x=spalte1+290, y=Zeilenabstand*16.5)
-tk.Button(window, text="Start mit zyklischer RB", width=20, command=berechnung_periodisch, bg="white").place(x=spalte1+560, y=Zeilenabstand*16.5)
+tk.Button(window, text="Start mit zyklischer RB", width=20, command=calculation_periodic, bg="white").place(x=spalte1+560, y=Zeilenabstand*16.5)
 tk.Button(window, text="Über..", width=6,height=1, command=about).place(x=spalte1+840, y=Zeilenabstand*16.5)
 
 skala = ImageTk.PhotoImage(Image.open("skala.png").resize((108, 546), Image.ANTIALIAS))

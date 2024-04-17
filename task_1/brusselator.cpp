@@ -1,43 +1,33 @@
-#include <SFML/Graphics.hpp>
 #include <iostream>
 #include <cstring>
 #include <cmath>
+#include <fstream>
 
-// compile: g++ -o brusselator brusselator.cpp -lsfml-graphics -lsfml-window -lsfml-system
+// compile: g++ -o brusselator brusselator.cpp 
 
 // Размеры окна
-u_int64_t WINDOW_WIDTH = 150;
-u_int64_t WINDOW_HEIGHT = 150;
+const int WINDOW_WIDTH = 100;
+const int WINDOW_HEIGHT = 100;
 
 // Параметры брюсселятора
-double a = 1.0;
-double b = 4.0;
-double b1 = b+1;
-double h = 0.00001;
-double x00 = 0.0, y00 = 0.0, vx = 2.0, vy = 1.5;
-int N = 100;
+double a = 1.3;
+double b = 3.5;
+double h = 0.1;
+double x00 = 0.1, y00 = 0.1, vx = 4.2, vy = 6.2;
+int N = 1000;
 
-// Параметры диффузии
-double D = 0.9;
-double dt = 0.1;
-double dx = 0.1;
-double dy = 0.1; 
-double intensity = 0.9;
-
-//Параметры изображения
-double frame = 0.0;
 
 double* xr, *xv, *yr, *yv;
 
 double X(double x, double y) {
-    return a - b1 * x + x * x * y;
+    return a - (b + 1) * x + x * x * y;
 }
 
 double Y(double x, double y) {
     return b * x - x * x * y;
 }
 
-void runge() {
+void rk4() {
     double k[4], l[4], n[4], m[4];
     int i;
 
@@ -75,6 +65,7 @@ void updateConcentration(double* concentration, double D, double dt, double dx, 
     for (int x = 1; x < WINDOW_WIDTH - 1; ++x) {
         for (int y = 1; y < WINDOW_HEIGHT - 1; ++y) {
             int index = y * WINDOW_WIDTH + x;
+
             double laplacian = concentration[index - WINDOW_WIDTH] + concentration[index + WINDOW_WIDTH] + concentration[index - 1] + concentration[index + 1] - 4 * concentration[index];
             newConcentration[index] = concentration[index] + D * dt * laplacian / (dx * dy);
         }
@@ -85,11 +76,13 @@ void updateConcentration(double* concentration, double D, double dt, double dx, 
 }
 
 int main() {
-    sf::RenderWindow window(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "Brusselator Diffusion");
 
-    sf::Texture texture;
-    texture.create(WINDOW_WIDTH, WINDOW_HEIGHT);
-    sf::Sprite sprite(texture);
+    //Параметры диффузии
+    double D = 1.1;
+    double dt = 0.6;
+    double dx = 0.1;
+    double dy = 0.1; 
+    double intensity = 0.9;
 
 
     double* concentration = new double[WINDOW_WIDTH * WINDOW_HEIGHT];
@@ -103,66 +96,23 @@ int main() {
     yv = (double*)malloc(N * sizeof(double));
 
 
-    while (window.isOpen()) {
-        sf::Event event;
-        while (window.pollEvent(event)) {
-            if (event.type == sf::Event::Closed) {
-                window.close();
-            }
-        }
-
-        //Обновление системы
-        runge();
+    for (int i = 0; i < N; i++) {
+        // Обновление системы
+        rk4();
 
         // Обновление массива концентрации на основе результатов runge()
         updateConcentration(concentration, D, dt, dx, dy);
 
-        // // Обновление массива концентрации на основе результатов runge()
-        // for (int x = 0; x < WINDOW_WIDTH; ++x) {
-        //     for (int y = 0; y < WINDOW_HEIGHT; ++y) {
-        //         int index = y * WINDOW_WIDTH + x;
-
-        //         if (x == 0 || y == 0 || x == WINDOW_WIDTH - 1 || y == WINDOW_HEIGHT - 1) {
-        //             // Условия Дирихле: функция равна нулю на границе
-        //             concentration[index] = 0;
-        //         } else {
-        //             // Обновляем концентрацию
-        //             concentration[index] = xr[index] + xv[index] + yr[index] + yv[index];
-        //         }
-        //     }
-        // }
-
-        // Визуализация
-        sf::Uint8* pixels = new sf::Uint8[WINDOW_WIDTH * WINDOW_HEIGHT * 4];
-        for (int i = 0; i < WINDOW_WIDTH * WINDOW_HEIGHT; ++i) {
-            double value = concentration[i];
-            double normalizedValue = value / 255.0; 
-            sf::Uint8 color = static_cast<sf::Uint8>(value * 255);
-            // sf::Uint8 animatedColor = static_cast<sf::Uint8>((color + frame) % 256);
-            sf::Uint8 animatedColor = static_cast<sf::Uint8>((color + sf::Uint8(128 * (1 + sin(frame / 50.0)))) % 256);   
-
-            // Используем цветовую карту для отображения различных уровней концентрации
-            sf::Color colorMap = sf::Color::Black;
-            if (value < 0.5) {
-                colorMap = sf::Color::Blue;    
-            } else {
-                colorMap = sf::Color::Red;
-            }
-
-            pixels[i * 4 + 0] = colorMap.r;
-            pixels[i * 4 + 1] = colorMap.g;
-            pixels[i * 4 + 2] = colorMap.b;
-            pixels[i * 4 + 3] = 255; 
+        // Сохранение результатов в файл
+        std::ofstream file;
+        file.open("output.txt", std::ios_base::app);
+        for (int j = 0; j < WINDOW_WIDTH * WINDOW_HEIGHT; ++j) {
+            file << concentration[j] << " ";
         }
-        texture.update(pixels);
-        delete[] pixels;
-
-        frame++;
-
-        window.clear();
-        window.draw(sprite);
-        window.display();
+        file << "\n";
+        file.close();
     }
+
 
     delete[] concentration;
     free(xr);

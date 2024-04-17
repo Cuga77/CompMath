@@ -3,8 +3,8 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
 # Размер окна
-WINDOW_WIDTH = 25
-WINDOW_HEIGHT = 25
+WINDOW_WIDTH = 125
+WINDOW_HEIGHT = 125
 
 # Чтение данных из файла
 data = np.loadtxt("output.txt")
@@ -21,10 +21,14 @@ fig = plt.figure()
 # Функция для обновления изображения на каждом шаге
 def update(i):
     plt.clf()
-    plt.imshow(x[i], cmap='winter', interpolation='none')
-    plt.clf()
-    plt.imshow(y[i], cmap='winter', interpolation='none')
+    plt.imshow(x[i], cmap='winter_r', interpolation='none')
+    # plt.clf()
+    # plt.imshow(y[i], cmap='winter', interpolation='none')
+    # plt.clf()
+    # plt.imshow(vy[i], cmap='winter', interpolation='none')
+    # plt.clf()
+    # plt.imshow(vx[i], cmap='winter', interpolation='none')
 
-ani = animation.FuncAnimation(fig, update, frames=range(len(x)), interval=1000)
+ani = animation.FuncAnimation(fig, update, frames=range(len(x)), interval=1)
 
 plt.show()

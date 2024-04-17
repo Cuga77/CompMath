@@ -5,18 +5,19 @@
 
 #include <SFML/Graphics.hpp>
 
-// compile: g++ brusselator.cpp && ./a.out && /bin/python3 /home/cuga/CompMath/task_1/visualisation.py
+// compile: g++ -O3 brusselator.cpp -lsfml-graphics -lsfml-window -lsfml-system -fopenmp && ./a.out
+
 
 // Размеры окна
 const int WINDOW_WIDTH = 100;
 const int WINDOW_HEIGHT = 100;
 
 // Параметры брюсселятора
-double a = 2.0;
+double a = 1.0;
 double b = 4.0;
 double b1 = b + 1;
-double h = 0.0001;
-int N = 10000;
+double h = 0.000001;
+int N = 1000;
 
 //Инициализация начальных значений
 double **x, **y, **vx, **vy;
@@ -37,20 +38,22 @@ void rk4(double** x, double** y, double** vx, double** vy, double dt) {
     double k1vx, k2vx, k3vx, k4vx;
     double k1vy, k2vy, k3vy, k4vy;
 
+    #pragma omp parallel for
     for (int i = 0; i < WINDOW_WIDTH; i++) {
         for (int j = 0; j < WINDOW_HEIGHT; j++) {
-            k1x = vx[i][j] * dt;
-            k1y = vy[i][j] * dt;
-            k1vx = X(x[i][j], y[i][j]) * dt;
-            k1vy = Y(x[i][j], y[i][j]) * dt;
+            double half_k1vx = k1vx / 2;
+            double half_k1vy = k1vy / 2;
 
-            k2x = (vx[i][j] + k1vx / 2) * dt;
-            k2y = (vy[i][j] + k1vy / 2) * dt;
+            k2x = (vx[i][j] + half_k1vx) * dt;
+            k2y = (vy[i][j] + half_k1vy) * dt;
             k2vx = X(x[i][j] + k1x / 2, y[i][j] + k1y / 2) * dt;
             k2vy = Y(x[i][j] + k1x / 2, y[i][j] + k1y / 2) * dt;
-            
-            k3x = (vx[i][j] + k2vx / 2) * dt;
-            k3y = (vy[i][j] + k2vy / 2) * dt;
+
+            double half_k2vx = k2vx / 2;
+            double half_k2vy = k2vy / 2;
+
+            k3x = (vx[i][j] + half_k2vx) * dt;
+            k3y = (vy[i][j] + half_k2vy) * dt;
             k3vx = X(x[i][j] + k2x / 2, y[i][j] + k2y / 2) * dt;
             k3vy = Y(x[i][j] + k2x / 2, y[i][j] + k2y / 2) * dt;
 
@@ -74,6 +77,7 @@ void compute_diffusion(double** arr, double D, double dt, double dx, double dy) 
         memcpy(temp[i], arr[i], WINDOW_HEIGHT * sizeof(double));
     }
 
+    #pragma omp parallel for
     for (int i = 1; i < WINDOW_WIDTH - 1; i++) {
         for (int j = 1; j < WINDOW_HEIGHT - 1; j++) {
             double diff_x = (temp[i - 1][j] - 2 * temp[i][j] + temp[i + 1][j]) / (dx * dx);
@@ -89,6 +93,8 @@ void compute_diffusion(double** arr, double D, double dt, double dx, double dy) 
 }
 
 int main() {
+    // Создание окна SFML
+    sf::RenderWindow window(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "Brusselator Visualization");
 
     //Параметры диффузии
     double D = 1.1;
@@ -116,20 +122,43 @@ int main() {
 
     std::ofstream file("output.txt");
     
-    // Обновление системы в цикле
-    for (int i = 0; i < WINDOW_WIDTH; i++) {
-    for (int j = 0; j < WINDOW_HEIGHT; j++) {
-        // Обновление значений с помощью метода Рунге-Кутты
-        rk4(x, y, vx, vy, dt);
-        // Вычисление диффузии
-        // compute_diffusion(x, D, dt, dx, dy);
-        // compute_diffusion(y, D, dt, dx, dy);
-        // compute_diffusion(vx, D, dt, dx, dy);
-        // compute_diffusion(vy, D, dt, dx, dy);
-        // Запись текущих значений в файл
-        file << x[i][j] << " " << y[i][j] << " " << vx[i][j] << " " << vy[i][j] << "\n";
-    }
-}
+    while (window.isOpen()) {
+        // Обработка событий
+        sf::Event event;
+        while (window.pollEvent(event)) {
+            if (event.type == sf::Event::Closed)
+                window.close();
+        }
+
+        // Обновление системы
+        #pragma omp parallel for
+        for (int i = 0; i < WINDOW_WIDTH; i++) {
+            for (int j = 0; j < WINDOW_HEIGHT; j++) {
+                rk4(x, y, vx, vy, dt);
+                compute_diffusion(x, D, dt, dx, dy);
+                compute_diffusion(y, D, dt, dx, dy);
+                // compute_diffusion(vx, D, dt, dx, dy);
+                // compute_diffusion(vy, D, dt, dx, dy);
+            }
+        }
+
+        // Очистка окна
+        window.clear();
+
+        // Визуализация данных
+        for (int i = 0; i < WINDOW_WIDTH; i++) {
+            for (int j = 0; j < WINDOW_HEIGHT; j++) {
+                sf::RectangleShape pixel(sf::Vector2f(1, 1));
+                pixel.setPosition(i, j);
+                pixel.setFillColor(sf::Color(x[i][j] * 255, y[i][j] * 255, 0));
+                window.draw(pixel);
+            }
+        }
+    // Отображение окна
+    window.display();
+    window.clear();
+    }    
+
 
     for (int i = 0; i < WINDOW_WIDTH; i++) {
         delete[] x[i];
@@ -143,4 +172,5 @@ int main() {
     delete[] vy;
 
     return 0;
+    
 }

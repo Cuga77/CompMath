@@ -1,24 +1,21 @@
-#include <SFML/Graphics.hpp>
 #include <iostream>
 #include <cstring>
 #include <cmath>
+#include <fstream>
 
-// compile: g++ -o brusselator brusselator.cpp -lsfml-graphics -lsfml-window -lsfml-system
+// compile: g++ -o brusselator brusselator.cpp 
 
 // Размеры окна
 const int WINDOW_WIDTH = 100;
 const int WINDOW_HEIGHT = 100;
 
 // Параметры брюсселятора
-double a = 1.1;
-double b = 8.9;
-double h = 0.01;
-double x00 = 0.9, y00 = 0.5, vx = 5.0, vy = 6.2;
+double a = 1.3;
+double b = 3.5;
+double h = 0.1;
+double x00 = 0.1, y00 = 0.1, vx = 4.2, vy = 6.2;
 int N = 1000;
 
-
-//Параметры изображения
-double frame = 0.1;
 
 double* xr, *xv, *yr, *yv;
 
@@ -80,18 +77,12 @@ void updateConcentration(double* concentration, double D, double dt, double dx, 
 
 int main() {
 
-// Параметры диффузии
+    //Параметры диффузии
     double D = 1.1;
     double dt = 0.6;
     double dx = 0.1;
     double dy = 0.1; 
     double intensity = 0.9;
-
-
-    sf::RenderWindow window(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "Brusselator Diffusion with SFML");
-    sf::Texture texture;
-    texture.create(WINDOW_WIDTH, WINDOW_HEIGHT);
-    sf::Sprite sprite(texture);
 
 
     double* concentration = new double[WINDOW_WIDTH * WINDOW_HEIGHT];
@@ -105,68 +96,23 @@ int main() {
     yv = (double*)malloc(N * sizeof(double));
 
 
-    while (window.isOpen()) {
-        sf::Event event;
-        while (window.pollEvent(event)) {
-            if (event.type == sf::Event::Closed) {
-                window.close();
-            }
-        }
-
-        //Обновление системы
+    for (int i = 0; i < N; i++) {
+        // Обновление системы
         rk4();
 
         // Обновление массива концентрации на основе результатов runge()
         updateConcentration(concentration, D, dt, dx, dy);
 
-        // // Обновление массива концентрации на основе результатов runge()
-        // for (int x = 0; x < WINDOW_WIDTH; ++x) {
-        //     for (int y = 0; y < WINDOW_HEIGHT; ++y) {
-        //         int index = y * WINDOW_WIDTH + x;
-
-                if (x == 0 || y == 0 || x == WINDOW_WIDTH - 1 || y == WINDOW_HEIGHT - 1) {
-                    // Условия Дирихле: функция равна нулю на границе
-                    concentration[index] = 0;
-                } else {
-                    // Обновляем концентрацию
-                    concentration[index] = xr[index] + xv[index] + yr[index] + yv[index];;
-                }
-            }
+        // Сохранение результатов в файл
+        std::ofstream file;
+        file.open("output.txt", std::ios_base::app);
+        for (int j = 0; j < WINDOW_WIDTH * WINDOW_HEIGHT; ++j) {
+            file << concentration[j] << " ";
         }
-
-        // Визуализация
-        sf::Uint8* pixels = new sf::Uint8[WINDOW_WIDTH * WINDOW_HEIGHT * 4];
-        for (int i = 0; i < WINDOW_WIDTH * WINDOW_HEIGHT; ++i) {
-            double value = concentration[i];
-            double normalizedValue = value / 255.0; 
-            sf::Uint8 color = static_cast<sf::Uint8>(value * 255);
-            sf::Uint8 animatedColor = static_cast<sf::Uint8>(u_long(color + frame) % 256);
-            // sf::Uint8 animatedColor = static_cast<sf::Uint8>((color + sf::Uint8(128 * (1 + sin(frame / 50.0)))) % 256);   
-
-            // Используем цветовую карту для отображения различных уровней концентрации
-            sf::Color colorMap = sf::Color::Black;
-            if (value < 0.25) {
-                colorMap = sf::Color::Blue;
-            } else if (value < 0.75) {
-                colorMap = sf::Color::Green;    
-            } else {
-                colorMap = sf::Color::Red;
-            }
-
-            pixels[i * 4 + 0] = colorMap.r;
-            pixels[i * 4 + 1] = colorMap.g;
-            pixels[i * 4 + 2] = colorMap.b;
-            pixels[i * 4 + 3] = 255; 
-        }
-        texture.update(pixels);
-        delete[] pixels;
-
-        frame++;
-
-        window.clear();
-        window.draw(sprite);
-        window.display();
+        file << "\n";
+        file.close();
     }
+
 
     delete[] concentration;
     free(xr);

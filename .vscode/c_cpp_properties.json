@@ -5,7 +5,8 @@
             "includePath": [
                 "${workspaceFolder}/**",
                 "/usr/include/SFML",
-                "/usr/local/include/eigen3"
+                "/usr/local/include/eigen3",
+                "/usr/include/tbb"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",

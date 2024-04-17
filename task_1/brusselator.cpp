@@ -9,15 +9,19 @@
 
 
 // Размеры окна
-const int WINDOW_WIDTH = 100;
-const int WINDOW_HEIGHT = 100;
+const int WINDOW_WIDTH = 70;      //~140 
+const int WINDOW_HEIGHT = 70;      //~140 
 
 // Параметры брюсселятора
-double a = 1.0;
-double b = 4.0;
+double a = 0.2;
+double b = 1.5;
 double b1 = b + 1;
-double h = 0.000001;
-int N = 1000;
+
+//Параметры диффузии
+double D = 0.1;
+double dt = 0.000005;
+double dx = 0.1;
+double dy = 0.1;  
 
 //Инициализация начальных значений
 double **x, **y, **vx, **vy;
@@ -70,10 +74,8 @@ void rk4(double** x, double** y, double** vx, double** vy, double dt) {
     }
 }
 
-void compute_diffusion(double** arr, double D, double dt, double dx, double dy) {
-    double** temp = new double*[WINDOW_WIDTH];
-    for (int i = 0; i < WINDOW_WIDTH; i++) {
-        temp[i] = new double[WINDOW_HEIGHT];
+void compute_diffusion(double** arr, double** temp, double D, double dt, double dx, double dy) {
+    for (int i = 0; i < WINDOW_WIDTH; ++i) {
         memcpy(temp[i], arr[i], WINDOW_HEIGHT * sizeof(double));
     }
 
@@ -85,33 +87,24 @@ void compute_diffusion(double** arr, double D, double dt, double dx, double dy) 
             arr[i][j] += D * dt * (diff_x + diff_y);
         }
     }
-
-    for (int i = 0; i < WINDOW_WIDTH; i++) {
-        delete[] temp[i];
-    }
-    delete[] temp;
 }
 
 int main() {
     // Создание окна SFML
-    sf::RenderWindow window(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "Brusselator Visualization");
-
-    //Параметры диффузии
-    double D = 1.1;
-    double dt = 0.001;
-    double dx = 0.1;
-    double dy = 0.1;     
+    sf::RenderWindow window(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "Brusselator Visualization");   
 
     // Инициализация массивов для хранения значений x, y, vx, vy
     x = new double*[WINDOW_WIDTH];
     y = new double*[WINDOW_WIDTH];
     vx = new double*[WINDOW_WIDTH];
     vy = new double*[WINDOW_WIDTH];
+    double** temp = new double*[WINDOW_WIDTH];
     for (int i = 0; i < WINDOW_WIDTH; i++) {
         x[i] = new double[WINDOW_HEIGHT];
         y[i] = new double[WINDOW_HEIGHT];
         vx[i] = new double[WINDOW_HEIGHT];
         vy[i] = new double[WINDOW_HEIGHT];
+        temp[i] = new double[WINDOW_HEIGHT];
         for (int j = 0; j < WINDOW_HEIGHT; j++) {
             x[i][j] = (double)rand() / RAND_MAX; // случайное число от 0 до 1
             y[i][j] = (double)rand() / RAND_MAX;
@@ -121,6 +114,15 @@ int main() {
     }
 
     std::ofstream file("output.txt");
+    
+    // Создаем текстуру и спрайт для рендеринга
+    sf::Texture texture;
+    texture.create(WINDOW_WIDTH, WINDOW_HEIGHT);
+    sf::Sprite sprite(texture);
+
+    // Создаем изображение, которое будет использоваться для текстуры
+    sf::Image image;
+    image.create(WINDOW_WIDTH, WINDOW_HEIGHT);
     
     while (window.isOpen()) {
         // Обработка событий
@@ -135,29 +137,23 @@ int main() {
         for (int i = 0; i < WINDOW_WIDTH; i++) {
             for (int j = 0; j < WINDOW_HEIGHT; j++) {
                 rk4(x, y, vx, vy, dt);
-                compute_diffusion(x, D, dt, dx, dy);
-                compute_diffusion(y, D, dt, dx, dy);
-                // compute_diffusion(vx, D, dt, dx, dy);
-                // compute_diffusion(vy, D, dt, dx, dy);
+                compute_diffusion(x, temp, D, dt, dx, dy);
+                compute_diffusion(y, temp, D, dt, dx, dy);
+                compute_diffusion(vx, temp, D, dt, dx, dy);
+                compute_diffusion(vy, temp, D, dt, dx, dy);
+
+                // Рендерим пиксель
+                sf::Color color(x[i][j] * 255, y[i][j] * 255, 10);
+                image.setPixel(i, j, color);
             }
         }
-
-        // Очистка окна
+        // Обновляем текстуру и рисуем спрайт
+        texture.update(image);
         window.clear();
+        window.draw(sprite);
+        window.display();
+    }
 
-        // Визуализация данных
-        for (int i = 0; i < WINDOW_WIDTH; i++) {
-            for (int j = 0; j < WINDOW_HEIGHT; j++) {
-                sf::RectangleShape pixel(sf::Vector2f(1, 1));
-                pixel.setPosition(i, j);
-                pixel.setFillColor(sf::Color(x[i][j] * 255, y[i][j] * 255, 0));
-                window.draw(pixel);
-            }
-        }
-    // Отображение окна
-    window.display();
-    window.clear();
-    }    
 
 
     for (int i = 0; i < WINDOW_WIDTH; i++) {
@@ -165,11 +161,13 @@ int main() {
         delete[] y[i];
         delete[] vx[i];
         delete[] vy[i];
+        delete[] temp[i];
     }
     delete[] x;
     delete[] y;
     delete[] vx;
     delete[] vy;
+    delete[] temp;
 
     return 0;
     

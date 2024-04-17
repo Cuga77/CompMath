@@ -2,20 +2,24 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
+# Размер окна
 WINDOW_WIDTH = 100
 WINDOW_HEIGHT = 100
 
-def animate(i):
-    with open("./output.txt", "r") as file:
-        lines = file.readlines()
-        concentration = np.array([float(x) for x in lines[i].split()]).reshape((WINDOW_WIDTH, WINDOW_HEIGHT))
+# Чтение данных из файла
+data = np.loadtxt("output.txt")
 
-    # Визуализация
-    im.set_array(concentration)
-    return [im]
+# Разделение данных на x, y, vx, vy
+x = data[:, 0].reshape((-1, WINDOW_WIDTH, WINDOW_HEIGHT))
+y = data[:, 1].reshape((-1, WINDOW_WIDTH, WINDOW_HEIGHT))
 
-fig, ax = plt.subplots()
-im = ax.imshow(np.ones((WINDOW_WIDTH, WINDOW_HEIGHT)), animated=True)
-ani = animation.FuncAnimation(fig, animate, frames=100, interval=100, blit=True)
+fig = plt.figure()
+
+# Функция для обновления изображения на каждом шаге
+def update(i):
+    plt.clf()
+    plt.imshow(x[i], cmap='winter_r', interpolation='none')
+
+ani = animation.FuncAnimation(fig, update, frames=range(len(x)), interval=10)
 
 plt.show()

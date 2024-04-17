@@ -3,122 +3,118 @@
 #include <cmath>
 #include <fstream>
 
-// compile: g++ -o brusselator brusselator.cpp 
+#include <SFML/Graphics.hpp>
+
+// compile: g++ -o brusselator brusselator.cpp && .\a.exe || ./a.out
 
 // Размеры окна
-const int WINDOW_WIDTH = 100;
-const int WINDOW_HEIGHT = 100;
+const int WINDOW_WIDTH = 200;
+const int WINDOW_HEIGHT = 200;
 
 // Параметры брюсселятора
-double a = 1.3;
-double b = 3.5;
-double h = 0.1;
-double x00 = 0.1, y00 = 0.1, vx = 4.2, vy = 6.2;
+double a = 2.9;
+double b = 1.3;
+double b1 = b + 1;
+double h = 0.001;
 int N = 1000;
 
+//Инициализация начальных значений
+double **x, **y, **vx, **vy;
 
-double* xr, *xv, *yr, *yv;
-
+// Функции для вычисления производных x и y
+//b1 для ускорения работы
 double X(double x, double y) {
-    return a - (b + 1) * x + x * x * y;
+    return a - b1 * x + x * x * y;
 }
 
 double Y(double x, double y) {
     return b * x - x * x * y;
 }
 
-void rk4() {
-    double k[4], l[4], n[4], m[4];
-    int i;
+void rk4(double** x, double** y, double** vx, double** vy, double dt) {
+    double k1x, k2x, k3x, k4x;
+    double k1y, k2y, k3y, k4y;
+    double k1vx, k2vx, k3vx, k4vx;
+    double k1vy, k2vy, k3vy, k4vy;
 
-    xr[0] = x00;
-    xv[0] = vx;
-    yr[0] = y00;
-    yv[0] = vy;
-    for (i = 0; i < N; i++) {
-        k[0] = xv[i] * h;
-        l[0] = X(xr[i], yr[i]) * h;
-        m[0] = yv[i] * h;
-        n[0] = Y(xr[i], yr[i]) * h;
-        k[1] = (xv[i] + 0.5 * l[0]) * h;
-        l[1] = X(xr[i] + 0.5 * k[0], yr[i] + 0.5 * m[0]) * h;
-        m[1] = (yr[i] + 0.5 * n[0]) * h;
-        n[1] = Y(xr[i] + 0.5 * k[0], yr[i] + 0.5 * m[0]) * h;
-        k[2] = (xv[i] + 0.5 * l[1]) * h;
-        l[2] = X(xr[i] + 0.5 * k[1], yr[i] + 0.5 * m[1]) * h;
-        m[2] = (yr[i] + 0.5 * n[1]) * h;
-        n[2] = Y(xr[i] + 0.5 * k[1], yr[i] + 0.5 * m[1]) * h;
-        k[3] = (xv[i] + l[2]) * h;
-        l[3] = X(xr[i] + k[2], yr[i] + m[2]) * h;
-        m[3] = (yr[i] + n[2]) * h;
-        n[3] = Y(xr[i] + k[2], yr[i] + m[2]) * h;
-        xr[i+1] = xr[i] + (1.0 / 6.0) * (k[0] + 2*k[1] + 2*k[2] + k[3]);
-        xv[i+1] = xv[i] + (1.0 / 6.0) * (l[0] + 2*l[1] + 2*l[2] + l[3]);
-        yr[i+1] = yr[i] + (1.0 / 6.0) * (m[0] + 2*m[1] + 2*m[2] + m[3]);
-        yv[i+1] = yv[i] + (1.0 / 6.0) * (n[0] + 2*n[1] + 2*n[2] + n[3]);
-    }
-}
+    for (int i = 0; i < WINDOW_WIDTH; i++) {
+        for (int j = 0; j < WINDOW_HEIGHT; j++) {
+            k1x = vx[i][j] * dt;
+            k1y = vy[i][j] * dt;
+            k1vx = X(x[i][j], y[i][j]) * dt;
+            k1vy = Y(x[i][j], y[i][j]) * dt;
 
-void updateConcentration(double* concentration, double D, double dt, double dx, double dy) {
-    double* newConcentration = new double[WINDOW_WIDTH * WINDOW_HEIGHT];
+            k2x = (vx[i][j] + k1vx / 2) * dt;
+            k2y = (vy[i][j] + k1vy / 2) * dt;
+            k2vx = X(x[i][j] + k1x / 2, y[i][j] + k1y / 2) * dt;
+            k2vy = Y(x[i][j] + k1x / 2, y[i][j] + k1y / 2) * dt;
+            
+            k3x = (vx[i][j] + k2vx / 2) * dt;
+            k3y = (vy[i][j] + k2vy / 2) * dt;
+            k3vx = X(x[i][j] + k2x / 2, y[i][j] + k2y / 2) * dt;
+            k3vy = Y(x[i][j] + k2x / 2, y[i][j] + k2y / 2) * dt;
 
-    for (int x = 1; x < WINDOW_WIDTH - 1; ++x) {
-        for (int y = 1; y < WINDOW_HEIGHT - 1; ++y) {
-            int index = y * WINDOW_WIDTH + x;
+            k4x = (vx[i][j] + k3vx) * dt;
+            k4y = (vy[i][j] + k3vy) * dt;
+            k4vx = X(x[i][j] + k3x, y[i][j] + k3y) * dt;
+            k4vy = Y(x[i][j] + k3x, y[i][j] + k3y) * dt;
 
-            double laplacian = concentration[index - WINDOW_WIDTH] + concentration[index + WINDOW_WIDTH] + concentration[index - 1] + concentration[index + 1] - 4 * concentration[index];
-            newConcentration[index] = concentration[index] + D * dt * laplacian / (dx * dy);
+            x[i][j] += (k1x + 2 * k2x + 2 * k3x + k4x) / 6;
+            y[i][j] += (k1y + 2 * k2y + 2 * k3y + k4y) / 6;
+            vx[i][j] += (k1vx + 2 * k2vx + 2 * k3vx + k4vx) / 6;
+            vy[i][j] += (k1vy + 2 * k2vy + 2 * k3vy + k4vy) / 6;
         }
     }
-
-    memcpy(concentration, newConcentration, WINDOW_WIDTH * WINDOW_HEIGHT * sizeof(double));
-    delete[] newConcentration;
 }
 
 int main() {
 
     //Параметры диффузии
     double D = 1.1;
-    double dt = 0.6;
+    double dt = 0.001;
     double dx = 0.1;
-    double dy = 0.1; 
-    double intensity = 0.9;
+    double dy = 0.1;     
 
-
-    double* concentration = new double[WINDOW_WIDTH * WINDOW_HEIGHT];
-    for (int i = 0; i < WINDOW_WIDTH * WINDOW_HEIGHT; ++i) {
-        concentration[i] += 1.0;
-    }
-
-    xr = (double*)malloc(N * sizeof(double));
-    xv = (double*)malloc(N * sizeof(double));
-    yr = (double*)malloc(N * sizeof(double));
-    yv = (double*)malloc(N * sizeof(double));
-
-
-    for (int i = 0; i < N; i++) {
-        // Обновление системы
-        rk4();
-
-        // Обновление массива концентрации на основе результатов runge()
-        updateConcentration(concentration, D, dt, dx, dy);
-
-        // Сохранение результатов в файл
-        std::ofstream file;
-        file.open("output.txt", std::ios_base::app);
-        for (int j = 0; j < WINDOW_WIDTH * WINDOW_HEIGHT; ++j) {
-            file << concentration[j] << " ";
+    // Инициализация массивов для хранения значений x, y, vx, vy
+    x = new double*[WINDOW_WIDTH];
+    y = new double*[WINDOW_WIDTH];
+    vx = new double*[WINDOW_WIDTH];
+    vy = new double*[WINDOW_WIDTH];
+    for (int i = 0; i < WINDOW_WIDTH; i++) {
+        x[i] = new double[WINDOW_HEIGHT];
+        y[i] = new double[WINDOW_HEIGHT];
+        vx[i] = new double[WINDOW_HEIGHT];
+        vy[i] = new double[WINDOW_HEIGHT];
+        for (int j = 0; j < WINDOW_HEIGHT; j++) {
+            x[i][j] = (double)rand() / RAND_MAX; // случайное число от 0 до 1
+            y[i][j] = (double)rand() / RAND_MAX;
+            vx[i][j] = (double)rand() / RAND_MAX;
+            vy[i][j] = (double)rand() / RAND_MAX;
         }
-        file << "\n";
-        file.close();
     }
 
+    std::ofstream file("output.txt");
+    
+    // Обновление системы в цикле
+    for (int i = 0; i < WINDOW_WIDTH; i++) {
+        for (int j = 0; j < WINDOW_HEIGHT; j++) {
+            // Обновление значений с помощью метода Рунге-Кутты
+            rk4(x, y, vx, vy, dt);
+            // Запись текущих значений в файл
+            file << x[i][j] << " " << y[i][j] << " " << vx[i][j] << " " << vy[i][j] << "\n";
+        }
+    }
 
-    delete[] concentration;
-    free(xr);
-    free(xv);
-    free(yr);
-    free(yv);
+    for (int i = 0; i < WINDOW_WIDTH; i++) {
+        delete[] x[i];
+        delete[] y[i];
+        delete[] vx[i];
+        delete[] vy[i];
+    }
+    delete[] x;
+    delete[] y;
+    delete[] vx;
+    delete[] vy;
 
     return 0;
 }

@@ -2,20 +2,21 @@
 #include <cstring>
 #include <cmath>
 #include <fstream>
+#include <chrono>
 
 #include <SFML/Graphics.hpp>
 
-constexpr int WINDOW_WIDTH = 70;
-constexpr int WINDOW_HEIGHT = 70;
+constexpr int WINDOW_WIDTH = 1000;
+constexpr int WINDOW_HEIGHT = 1000; // 175x175 НЕ ОК
 
-constexpr double A = 0.2;
-constexpr double B = 1.5;
+constexpr double A = 0.6;
+constexpr double B = 2.9;
 constexpr double B1 = B + 1;
 
-constexpr double Dd = 0.3;
-constexpr double DT = 0.0001;
-constexpr double DX = 0.1;
-constexpr double DY = 0.1;
+constexpr double Dd = 0.4;
+constexpr double DT = 0.0004;
+constexpr double DX = 0.05;
+constexpr double DY = 0.02;
 
 // compile: g++ -O3 brusselator.cpp -lsfml-graphics -lsfml-window -lsfml-system -fopenmp && ./a.out
 
@@ -121,6 +122,9 @@ int main() {
     sf::Sprite sprite(texture);
     sf::Image image;
     image.create(WINDOW_WIDTH, WINDOW_HEIGHT);
+
+    u_int16_t step_x = int(WINDOW_WIDTH / 3);
+    u_int16_t step_y = int(WINDOW_HEIGHT / 3);
     
     while (window.isOpen()) {
         sf::Event event;
@@ -130,13 +134,15 @@ int main() {
         }
 
         #pragma omp parallel for
-        for (int i = 0; i < WINDOW_WIDTH; i++) {
-            for (int j = 0; j < WINDOW_HEIGHT; j++) {
+        for (int i = 0; i < WINDOW_WIDTH; i += step_x) {
+            for (int j = 0; j < WINDOW_HEIGHT; j += step_y) {
                 rk4(x, y, vx, vy, dt);
-                compute_diffusion(x, x, D, dt, dx, dy);
-                compute_diffusion(y, y, D, dt, dx, dy);
-                compute_diffusion(vx, vx, D, dt, dx, dy);
-                compute_diffusion(vy, vy, D, dt, dx, dy); 
+                if (i % 15 == 0 && j % 15 == 0) {
+                    compute_diffusion(x, x, D, dt, dx, dy);
+                    compute_diffusion(y, y, D, dt, dx, dy);
+                    compute_diffusion(vx, vx, D, dt, dx, dy);
+                    compute_diffusion(vy, vy, D, dt, dx, dy); 
+                }
             }
         }
 

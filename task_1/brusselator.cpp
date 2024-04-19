@@ -1,13 +1,12 @@
 #include <iostream>
-#include <cstring>
 #include <cmath>
 #include <fstream>
 #include <chrono>
-
+#include <cstring>
 #include <SFML/Graphics.hpp>
 
-constexpr int WINDOW_WIDTH = 1000;
-constexpr int WINDOW_HEIGHT = 1000; // 175x175 НЕ ОК
+constexpr int WINDOW_WIDTH = 500;
+constexpr int WINDOW_HEIGHT = 500;
 
 constexpr double A = 0.6;
 constexpr double B = 2.9;
@@ -97,7 +96,7 @@ int main() {
     double dy = DY; 
     double **x, **y, **vx, **vy;
 
-    sf::RenderWindow window(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "Brusselator Visualization");   
+    sf::RenderWindow window(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "Brusselator");   
     x = new double*[WINDOW_WIDTH];
     y = new double*[WINDOW_WIDTH];
     vx = new double*[WINDOW_WIDTH];
@@ -137,7 +136,7 @@ int main() {
         for (int i = 0; i < WINDOW_WIDTH; i += step_x) {
             for (int j = 0; j < WINDOW_HEIGHT; j += step_y) {
                 rk4(x, y, vx, vy, dt);
-                if (i % 15 == 0 && j % 15 == 0) {
+                if (i % 15 == 0 && j % 25 == 0) {
                     compute_diffusion(x, x, D, dt, dx, dy);
                     compute_diffusion(y, y, D, dt, dx, dy);
                     compute_diffusion(vx, vx, D, dt, dx, dy);
@@ -145,11 +144,10 @@ int main() {
                 }
             }
         }
-
         #pragma omp parallel for
         for (int i = 0; i < WINDOW_WIDTH; i++) {
             for (int j = 0; j < WINDOW_HEIGHT; j++) {
-                sf::Color color(x[i][j]*255, y[i][j]*255, 0);
+                sf::Color color(x[i][j]*255, y[i][j]*255, 90);
                 image.setPixel(i, j, color);
             }
         }

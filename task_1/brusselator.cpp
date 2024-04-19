@@ -5,35 +5,26 @@
 
 #include <SFML/Graphics.hpp>
 
+constexpr int WINDOW_WIDTH = 70;
+constexpr int WINDOW_HEIGHT = 70;
+
+constexpr double A = 0.2;
+constexpr double B = 1.5;
+constexpr double B1 = B + 1;
+
+constexpr double Dd = 0.3;
+constexpr double DT = 0.0001;
+constexpr double DX = 0.1;
+constexpr double DY = 0.1;
+
 // compile: g++ -O3 brusselator.cpp -lsfml-graphics -lsfml-window -lsfml-system -fopenmp && ./a.out
 
-
-// Размеры окна
-const int WINDOW_WIDTH = 70;      //~140 
-const int WINDOW_HEIGHT = 70;      //~140 
-
-// Параметры брюсселятора
-double a = 0.2;
-double b = 1.5;
-double b1 = b + 1;
-
-//Параметры диффузии
-double D = 0.1;
-double dt = 0.000005;
-double dx = 0.1;
-double dy = 0.1;  
-
-//Инициализация начальных значений
-double **x, **y, **vx, **vy;
-
-// Функции для вычисления производных x и y
-//b1 для ускорения работы
 double X(double x, double y) {
-    return a - b1 * x + x * x * y;
+    return B - B1 * x + x * x * y;
 }
 
 double Y(double x, double y) {
-    return b * x - x * x * y;
+    return B * x - x * x * y;
 }
 
 void rk4(double** x, double** y, double** vx, double** vy, double dt) {
@@ -45,6 +36,11 @@ void rk4(double** x, double** y, double** vx, double** vy, double dt) {
     #pragma omp parallel for
     for (int i = 0; i < WINDOW_WIDTH; i++) {
         for (int j = 0; j < WINDOW_HEIGHT; j++) {
+            k1x = vx[i][j] * dt;
+            k1y = vy[i][j] * dt;
+            k1vx = X(x[i][j], y[i][j]) * dt;
+            k1vy = Y(x[i][j], y[i][j]) * dt;
+
             double half_k1vx = k1vx / 2;
             double half_k1vy = k1vy / 2;
 
@@ -79,21 +75,28 @@ void compute_diffusion(double** arr, double** temp, double D, double dt, double 
         memcpy(temp[i], arr[i], WINDOW_HEIGHT * sizeof(double));
     }
 
+    double dx2 = dx * dx;
+    double dy2 = dy * dy;
+    double Ddt = D * dt;
+
     #pragma omp parallel for
     for (int i = 1; i < WINDOW_WIDTH - 1; i++) {
         for (int j = 1; j < WINDOW_HEIGHT - 1; j++) {
-            double diff_x = (temp[i - 1][j] - 2 * temp[i][j] + temp[i + 1][j]) / (dx * dx);
-            double diff_y = (temp[i][j - 1] - 2 * temp[i][j] + temp[i][j + 1]) / (dy * dy);
-            arr[i][j] += D * dt * (diff_x + diff_y);
+            double diff_x = (temp[i - 1][j] - 2 * temp[i][j] + temp[i + 1][j]) / dx2;
+            double diff_y = (temp[i][j - 1] - 2 * temp[i][j] + temp[i][j + 1]) / dy2;
+            arr[i][j] += Ddt * (diff_x + diff_y);
         }
     }
 }
 
 int main() {
-    // Создание окна SFML
-    sf::RenderWindow window(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "Brusselator Visualization");   
+    double D = Dd;
+    double dt = DT;
+    double dx = DX;
+    double dy = DY; 
+    double **x, **y, **vx, **vy;
 
-    // Инициализация массивов для хранения значений x, y, vx, vy
+    sf::RenderWindow window(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "Brusselator Visualization");   
     x = new double*[WINDOW_WIDTH];
     y = new double*[WINDOW_WIDTH];
     vx = new double*[WINDOW_WIDTH];
@@ -113,41 +116,38 @@ int main() {
         }
     }
 
-    std::ofstream file("output.txt");
-    
-    // Создаем текстуру и спрайт для рендеринга
     sf::Texture texture;
     texture.create(WINDOW_WIDTH, WINDOW_HEIGHT);
     sf::Sprite sprite(texture);
-
-    // Создаем изображение, которое будет использоваться для текстуры
     sf::Image image;
     image.create(WINDOW_WIDTH, WINDOW_HEIGHT);
     
     while (window.isOpen()) {
-        // Обработка событий
         sf::Event event;
         while (window.pollEvent(event)) {
             if (event.type == sf::Event::Closed)
                 window.close();
         }
 
-        // Обновление системы
         #pragma omp parallel for
         for (int i = 0; i < WINDOW_WIDTH; i++) {
             for (int j = 0; j < WINDOW_HEIGHT; j++) {
                 rk4(x, y, vx, vy, dt);
-                compute_diffusion(x, temp, D, dt, dx, dy);
-                compute_diffusion(y, temp, D, dt, dx, dy);
-                compute_diffusion(vx, temp, D, dt, dx, dy);
-                compute_diffusion(vy, temp, D, dt, dx, dy);
+                compute_diffusion(x, x, D, dt, dx, dy);
+                compute_diffusion(y, y, D, dt, dx, dy);
+                compute_diffusion(vx, vx, D, dt, dx, dy);
+                compute_diffusion(vy, vy, D, dt, dx, dy); 
+            }
+        }
 
-                // Рендерим пиксель
-                sf::Color color(x[i][j] * 255, y[i][j] * 255, 10);
+        #pragma omp parallel for
+        for (int i = 0; i < WINDOW_WIDTH; i++) {
+            for (int j = 0; j < WINDOW_HEIGHT; j++) {
+                sf::Color color(x[i][j]*255, y[i][j]*255, 0);
                 image.setPixel(i, j, color);
             }
         }
-        // Обновляем текстуру и рисуем спрайт
+        
         texture.update(image);
         window.clear();
         window.draw(sprite);

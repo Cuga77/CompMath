@@ -12,14 +12,15 @@
             "compilerPath": "/usr/bin/gcc",
             "cStandard": "c17",
             "cppStandard": "gnu++17",
-            "intelliSenseMode": "linux-gcc-x64"
+            "intelliSenseMode": "linux-gcc-x64",
+            "configurationProvider": "BartmanAbyss.amiga-debug"
         },
         {
             "name": "Win64",
             "includePath": [
                 "${workspaceFolder}/**",
                 "C:\\vcpkg\\installed\\x64-windows\\include",
-                "C:/SFML-2.5.1/include",
+                "C:/SFML-2.5.1/include"
             ],
             "defines": [
                 "_DEBUG",

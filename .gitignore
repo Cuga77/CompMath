@@ -1,2 +1,12 @@
 task_1/output.txt
 task_1/a.exe
+task_1/analysis.txt
+task_1/brusselator
+task_1/a.out
+task_1/gmon.out
+task_1/no suitable kallsyms nor vmlinux was found, kernel samples │
+task_1/perf.data
+task_1/.gitattributes
+task_1/oldbrusselator.cpp
+task_1/brusselator
+task_1/bruss

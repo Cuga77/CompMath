@@ -5,17 +5,17 @@
 #include <cstring>
 #include <SFML/Graphics.hpp>
 
-constexpr int WINDOW_WIDTH = 500;
-constexpr int WINDOW_HEIGHT = 500;
+constexpr int WINDOW_WIDTH = 600;
+constexpr int WINDOW_HEIGHT = 600;
 
 constexpr double A = 0.6;
 constexpr double B = 2.9;
 constexpr double B1 = B + 1;
 
-constexpr double Dd = 0.4;
-constexpr double DT = 0.0004;
-constexpr double DX = 0.05;
-constexpr double DY = 0.02;
+constexpr double Dd = 0.9;
+constexpr double DT = 0.000192;
+constexpr double DX = 0.015;
+constexpr double DY = 0.028;
 
 // compile: g++ -O3 brusselator.cpp -lsfml-graphics -lsfml-window -lsfml-system -fopenmp && ./a.out
 

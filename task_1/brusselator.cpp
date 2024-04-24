@@ -19,7 +19,7 @@ constexpr double DY = 0.028;
 // compile: g++ -O3 brusselator.cpp -lsfml-graphics -lsfml-window -lsfml-system -fopenmp && ./a.out
 
 double X(double x, double y) {
-    return B - B1 * x + x * x * y;
+    return A - B1 * x + x * x * y;
 }
 
 double Y(double x, double y) {

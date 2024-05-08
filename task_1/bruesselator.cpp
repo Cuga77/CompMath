@@ -4,8 +4,6 @@
 #include <cstring>
 #include <SFML/Graphics.hpp>
 
-#include <random>
-
 
 // dx/dt = x^2y/2 + a - bx -x
 // dy/dt = -x^2y/2 + bx
@@ -18,17 +16,12 @@
 constexpr int WINDOW_WIDTH = 1000;
 constexpr int WINDOW_HEIGHT = 1000;
 
-constexpr double min_ss = 0.0001;
-constexpr double max_ss = 0.1;
-
 constexpr double A = 4.6;
 constexpr double B = 1.2;
 constexpr double B1 = (B + 1);
 
 constexpr double Dd = (double)(1.5E-10);
-constexpr double H = 0.0000001;
-constexpr double DX = 15;
-constexpr double DY = 25;
+constexpr double H = (double)(1.5E-10);
 
 // compile: g++ -O3 bruesselator.cpp -lsfml-graphics -lsfml-window -lsfml-system -fopenmp && ./a.out
 
@@ -131,10 +124,10 @@ double Y(double x, double y) {
 // }
 
 
-//todo: RK4  не должна знать о показаниях
+//// todo: RK4  не должна знать о показаниях x и y
 void rk4 (double x[], double *t, double h) {
-    double k1x, k2x, k3x, k4x, k5x, k6x;
-    double k1y, k2y, k3y, k4y, k5y, k6y;
+    double k1x, k2x, k3x, k4x;
+    double k1y, k2y, k3y, k4y;
     double temp_x, temp_y;
     
     k1x = h * X(x[0], x[1]);
@@ -148,12 +141,6 @@ void rk4 (double x[], double *t, double h) {
 
     k4x = h * X(x[0] + k3x, x[1] + k3y);
     k4y = h * Y(x[0] + k3x, x[1] + k3y);
-
-    k5x = h * X(x[0] + (2.0 / 3.0) * k4x, x[1] + (2.0 / 3.0) * k4y);
-    k5y = h * Y(x[0] + (2.0 / 3.0) * k4x, x[1] + (2.0 / 3.0) * k4y);
-
-    k6x = h * X(x[0] + 0.25 * k1x + 0.75 * k4x, x[1] + 0.25 * k1y + 0.75 * k4y);
-    k6y = h * Y(x[0] + 0.25 * k1x + 0.75 * k4x, x[1] + 0.25 * k1y + 0.75 * k4y);
 
     temp_x = x[0] + (1.0 / 9.0) * (2 * k1x + 3 * k3x + 4 * k4x);
     temp_y = x[1] + (1.0 / 9.0) * (2 * k1y + 3 * k3y + 4 * k4y);
@@ -185,9 +172,8 @@ void rk4 (double x[], double *t, double h) {
 
 
 int main() {
-    double* x = new double[WINDOW_WIDTH * WINDOW_HEIGHT * 2];  // Initial conditions for each pixel
+    double* x = new double[WINDOW_WIDTH * WINDOW_HEIGHT * 2];
     double t = 0.0;
-    double ss = max_ss; 
 
     srand(time(NULL));
     sf::RenderWindow window(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "Bruesselator"); 
@@ -214,7 +200,6 @@ int main() {
                 x[(i * WINDOW_HEIGHT + j) * 2] += (double)rand() / RAND_MAX - 0.5;
                 x[(i * WINDOW_HEIGHT + j) * 2 + 1] += (double)rand() / RAND_MAX - 0.5;
                 rk4(&x[(i * WINDOW_HEIGHT + j) * 2], &t, H);
-
 
                 sf::Color color = sf::Color(255 * x[(i * WINDOW_HEIGHT + j) * 2], 255 * x[(i * WINDOW_HEIGHT + j) * 2 + 1], 0);
                 image.setPixel(i, j, color);

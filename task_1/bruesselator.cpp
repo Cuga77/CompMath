@@ -14,17 +14,17 @@
 // dy/dt = -x^2y/2 + bx + D(d^2y/dx^2 + d^2y/dy^2)
 
 
-constexpr int WINDOW_WIDTH = 50;
-constexpr int WINDOW_HEIGHT = 50;
+constexpr int WINDOW_WIDTH = 200;
+constexpr int WINDOW_HEIGHT = 200;
 
-constexpr double A = 1.0;
-constexpr double B = 3.5;
+constexpr double A = 4.6;
+constexpr double B = 1.2;
 constexpr double B1 = (B + 1);
 
 constexpr double Dd = (double)(0.5E-10);
-constexpr double DT = 0.0000005;
+constexpr double DT = 0.000005;
 constexpr double DX = 15;
-constexpr double DY = 20;
+constexpr double DY = 3;
 
 // compile: g++ -O3 bruesselator.cpp -lsfml-graphics -lsfml-window -lsfml-system -fopenmp && ./a.out
 
@@ -286,8 +286,8 @@ int main() {
         // }
 
         #pragma omp parallel for
-        for (int i = 0; i < WINDOW_WIDTH; i+= /*step_x*/1) {
-            for (int j = 0; j < WINDOW_HEIGHT; j+= /*step_y*/1) {
+        for (int i = 0; i < WINDOW_WIDTH; i+= step_x) {
+            for (int j = 0; j < WINDOW_HEIGHT; j+= step_y) {
                 rk4(x, y, vx, vy, dt);
                 // diffusion(x, y, Dd, dt, DX, DY);
                 // diffusion(vx, vy, Dd, dt, DX, DY);

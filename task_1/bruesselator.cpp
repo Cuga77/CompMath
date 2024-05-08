@@ -14,17 +14,17 @@
 // dy/dt = -x^2y/2 + bx + D(d^2y/dx^2 + d^2y/dy^2)
 
 
-constexpr int WINDOW_WIDTH = 200;
-constexpr int WINDOW_HEIGHT = 200;
+constexpr int WINDOW_WIDTH = 50;
+constexpr int WINDOW_HEIGHT = 50;
 
 constexpr double A = 1.0;
 constexpr double B = 3.5;
 constexpr double B1 = (B + 1);
 
-constexpr double Dd = (double)(1.1E-6);
-constexpr double DT = 0.0001;
-constexpr double DX = 0.0015;
-constexpr double DY = 0.0028;
+constexpr double Dd = (double)(0.5E-10);
+constexpr double DT = 0.0000005;
+constexpr double DX = 15;
+constexpr double DY = 20;
 
 // compile: g++ -O3 bruesselator.cpp -lsfml-graphics -lsfml-window -lsfml-system -fopenmp && ./a.out
 
@@ -36,26 +36,62 @@ double Y(double x, double y, double dx2, double dy2) {
     return B * x - x*x*y;
 }
 
-//диффузия ПОСЛЕ
+// //диффузия ПОСЛЕ
 
+// void diffusion(double** x, double** y, double D, double dt, double dx, double dy) {
+//     double** temp = new double*[WINDOW_WIDTH];
+//     #pragma omp parallel for
+//     for (int i = 0; i < WINDOW_WIDTH; i++) {
+//         temp[i] = new double[WINDOW_HEIGHT];
+//         for (int j = 0; j < WINDOW_HEIGHT; j++) {
+//             int i_minus = (i > 0) ? i - 1 : WINDOW_WIDTH - 1;
+//             int i_plus = (i < WINDOW_WIDTH - 1) ? i + 1 : 0;
+//             int j_minus = (j > 0) ? j - 1 : WINDOW_HEIGHT - 1;
+//             int j_plus = (j < WINDOW_HEIGHT - 1) ? j + 1 : 0;
+
+//             double dx2_x = (x[i_minus][j] - 2 * x[i][j] + x[i_plus][j]) / (dx * dx);
+//             double dy2_x = (x[i][j_minus] - 2 * x[i][j] + x[i][j_plus]) / (dy * dy);
+//             temp[i][j] = x[i][j] + dt * X(x[i][j], y[i][j], dx2_x, dy2_x);
+
+//             double dx2_y = (y[i_minus][j] - 2 * y[i][j] + y[i_plus][j]) / (dx * dx);
+//             double dy2_y = (y[i][j_minus] - 2 * y[i][j] + y[i][j_plus]) / (dy * dy);
+//             temp[i][j] = y[i][j] + dt * Y(x[i][j], y[i][j], dx2_y, dy2_y);
+
+//             x[i][j] = temp[i][j];
+//             y[i][j] = temp[i][j];
+//         }
+//         free(temp[i]);
+//     }
+//     free(temp);
+// }
+
+//Диффузия по 4 соседним точкам
 void diffusion(double** x, double** y, double D, double dt, double dx, double dy) {
     double** temp = new double*[WINDOW_WIDTH];
     #pragma omp parallel for
     for (int i = 0; i < WINDOW_WIDTH; i++) {
         temp[i] = new double[WINDOW_HEIGHT];
         for (int j = 0; j < WINDOW_HEIGHT; j++) {
-            int i_minus = (i > 0) ? i - 1 : WINDOW_WIDTH - 1;
-            int i_plus = (i < WINDOW_WIDTH - 1) ? i + 1 : 0;
-            int j_minus = (j > 0) ? j - 1 : WINDOW_HEIGHT - 1;
-            int j_plus = (j < WINDOW_HEIGHT - 1) ? j + 1 : 0;
+            int i_minus = (i > 0) ? i - 1 : i;
+            int i_plus = (i < WINDOW_WIDTH - 1) ? i + 1 : i;
+            int j_minus = (j > 0) ? j - 1 : j;
+            int j_plus = (j < WINDOW_HEIGHT - 1) ? j + 1 : j;
 
             double dx2_x = (x[i_minus][j] - 2 * x[i][j] + x[i_plus][j]) / (dx * dx);
             double dy2_x = (x[i][j_minus] - 2 * x[i][j] + x[i][j_plus]) / (dy * dy);
-            temp[i][j] = x[i][j] + dt * X(x[i][j], y[i][j], dx2_x, dy2_x);
+            temp[i][j] = x[i][j] + dt * (X(x[i][j], y[i][j], dx2_x, dy2_x) + D * (dx2_x + dy2_x));
+
+            // double dx2_x = (x[i][j] - 2 * x[i][j] + x[i][j]) / (dx * dx);
+            // double dy2_x = (x[i][j] - 2 * x[i][j] + x[i][j]) / (dy * dy);
+            // temp[i][j] = x[i][j] + dt * (X(x[i][j], y[i][j], dx2_x, dy2_x) + D * (dx2_x + dy2_x));
 
             double dx2_y = (y[i_minus][j] - 2 * y[i][j] + y[i_plus][j]) / (dx * dx);
             double dy2_y = (y[i][j_minus] - 2 * y[i][j] + y[i][j_plus]) / (dy * dy);
-            temp[i][j] = y[i][j] + dt * Y(x[i][j], y[i][j], dx2_y, dy2_y);
+            temp[i][j] = y[i][j] + dt * (Y(x[i][j], y[i][j], dx2_y, dy2_y) + D * (dx2_y + dy2_y));
+
+            // double dx2_y = (y[i][j] - 2 * y[i][j] + y[i][j]) / (dx * dx);
+            // double dy2_y = (y[i][j] - 2 * y[i][j] + y[i][j]) / (dy * dy);
+            // temp[i][j] = y[i][j] + dt * (Y(x[i][j], y[i][j], dx2_y, dy2_y) + D * (dx2_y + dy2_y));
 
             x[i][j] = temp[i][j];
             y[i][j] = temp[i][j];
@@ -123,18 +159,15 @@ void rk4 (double** x, double** y, double** vx, double** vy, double dt) {
             k4y[i][j] = dt * Y(x[i][j] + k3x[i][j], y[i][j] + k3y[i][j], DX, DY);
             k4vx[i][j] = dt * X(vx[i][j] + k3vx[i][j], vy[i][j] + k3vy[i][j], DX, DY);
             k4vy[i][j] = dt * Y(vx[i][j] + k3vx[i][j], vy[i][j] + k3vy[i][j], DX, DY);
-        }
-    }
-
-    #pragma omp parallel for
-    for (int i = 0; i < WINDOW_WIDTH; i++) {
-        for (int j = 0; j < WINDOW_HEIGHT; j++) {
+            
             x[i][j] += (k1x[i][j] + 2 * k2x[i][j] + 2 * k3x[i][j] + k4x[i][j]) / 6;
             y[i][j] += (k1y[i][j] + 2 * k2y[i][j] + 2 * k3y[i][j] + k4y[i][j]) / 6;
             vx[i][j] += (k1vx[i][j] + 2 * k2vx[i][j] + 2 * k3vx[i][j] + k4vx[i][j]) / 6;
             vy[i][j] += (k1vy[i][j] + 2 * k2vy[i][j] + 2 * k3vy[i][j] + k4vy[i][j]) / 6;
         }
     }
+    diffusion(x, y, Dd, dt, DX, DY);
+    diffusion(vx, vy, Dd, dt, DX, DY);
 
     for (int i = 0; i < WINDOW_WIDTH; i++) {
         delete[] k1x[i];
@@ -253,18 +286,18 @@ int main() {
         // }
 
         #pragma omp parallel for
-        for (int i = 0; i < WINDOW_WIDTH; i+= step_x) {
-            for (int j = 0; j < WINDOW_HEIGHT; j+= step_y) {
+        for (int i = 0; i < WINDOW_WIDTH; i+= /*step_x*/1) {
+            for (int j = 0; j < WINDOW_HEIGHT; j+= /*step_y*/1) {
                 rk4(x, y, vx, vy, dt);
-                diffusion(x, y, Dd, dt, DX, DY);
-                diffusion(vx, vy, Dd, dt, DX, DY);
+                // diffusion(x, y, Dd, dt, DX, DY);
+                // diffusion(vx, vy, Dd, dt, DX, DY);
                 
             }
         }
         #pragma omp parallel for
         for (int i = 0; i < WINDOW_WIDTH; i++) {
             for (int j = 0; j < WINDOW_HEIGHT; j++) {
-                sf::Color color = sf::Color(255 * x[i][j], 255 * y[i][j], 255 * vx[i][j]);
+                sf::Color color = sf::Color(255 * x[i][j],  255 * vx[i][j], 255 * y[i][j]);
                 image.setPixel(i, j, color);
             }
         }

@@ -35,65 +35,37 @@ double Y(double x, double y) {
 }
 
 void rk4(double *X, double *t, double h, void (*f)(double *X, double *Xdot), double *k1, double *k2, double *k3, double *k4) {
-    int size = 2 * WINDOW_WIDTH * WINDOW_HEIGHT;
     f(X, k1);
     for (int i = 0; i < size; i++) {
         k1[i] *= h;
-    }
-    for (int i = 0; i < size; i++) {
         k2[i] = X[i] + k1[i] * 0.5;
     }
     f(k2, k2);
     for (int i = 0; i < size; i++) {
         k2[i] *= h;
-    }
-    for (int i = 0; i < size; i++) {
         k3[i] = X[i] + k2[i] * 0.5;
     }
     f(k3, k3);
     for (int i = 0; i < size; i++) {
         k3[i] *= h;
-    }
-    for (int i = 0; i < size; i++) {
         k4[i] = X[i] + k3[i];
     }
     f(k4, k4);
     for (int i = 0; i < size; i++) {
         k4[i] *= h;
-    }
-    for (int i = 0; i < size; i++) {
         X[i] += (k1[i] + 2 * k2[i] + 2 * k3[i] + k4[i]) / 6;
     }
     *t += h;
 }
 
-// void rk4 (double x[], double *t, double h) {
-//     double k1x, k2x, k3x, k4x;
-//     double k1y, k2y, k3y, k4y;
-//     double temp_x, temp_y; 
-//     k1x = h * X(x[0], x[1]);
-//     k1y = h * Y(x[0], x[1]);
-//     k2x = h * X(x[0] + 0.5 * k1x, x[1] + 0.5 * k1y);
-//     k2y = h * Y(x[0] + 0.5 * k1x, x[1] + 0.5 * k1y);
-//     k3x = h * X(x[0] + 0.5 * k2x, x[1] + 0.5 * k2y);
-//     k3y = h * Y(x[0] + 0.5 * k2x, x[1] + 0.5 * k2y);
-//     k4x = h * X(x[0] + k3x, x[1] + k3y);
-//     k4y = h * Y(x[0] + k3x, x[1] + k3y);
-//     temp_x = x[0] + (1.0 / 6.0) * (k1x + 2 * k2x + 2 * k3x + k4x);
-//     temp_y = x[1] + (1.0 / 6.0) * (k1y + 2 * k2y + 2 * k3y + k4y);
-//     x[0] = temp_x;
-//     x[1] = temp_y;
-//     *t += h;
-// }
-
 int main() {
     double t = 0;
-    double* x = new double[WINDOW_WIDTH * WINDOW_HEIGHT * 2];
-    double* temp = new double[WINDOW_WIDTH * WINDOW_HEIGHT * 2];
-    double* k1 = new double[WINDOW_WIDTH * WINDOW_HEIGHT * 2];
-    double* k2 = new double[WINDOW_WIDTH * WINDOW_HEIGHT * 2];
-    double* k3 = new double[WINDOW_WIDTH * WINDOW_HEIGHT * 2];
-    double* k4 = new double[WINDOW_WIDTH * WINDOW_HEIGHT * 2];
+    double* x = new double[size];
+    double* temp = new double[size];
+    double* k1 = new double[size];
+    double* k2 = new double[size];
+    double* k3 = new double[size];
+    double* k4 = new double[size];
 
     srand(time(NULL));
     sf::RenderWindow window(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "Bruesselator"); 

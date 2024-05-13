@@ -18,11 +18,10 @@ constexpr int WINDOW_HEIGHT = 500;
 constexpr int size = 2 * WINDOW_WIDTH * WINDOW_HEIGHT;
 
 constexpr double A = 3.5;
-constexpr double B = 1.3;
+constexpr double B = 1.0;
 constexpr double B1 = (B + 1);
 
-constexpr double Dd = (double)(1.5E-5);
-constexpr double H = (double)(1E-3);
+constexpr double H = (double)(5E-3);
 
 // compile: g++ -O3 bruesselator.cpp -lsfml-graphics -lsfml-window -lsfml-system -fopenmp && ./a.out
 
@@ -89,8 +88,8 @@ int main() {
         }
         rk4(x, &t, H, [](double *X, double *Xdot) {
             for (int i = 0; i < size; i += 2) {
-                Xdot[i] = X[i] * X[i + 1] / 2 + A - B1 * X[i] - X[i];
-                Xdot[i + 1] = -X[i] * X[i + 1] / 2 + B * X[i];
+                Xdot[i] = X[i] * X[i + 1] * 0.5 + A - B1 * X[i] - X[i];
+                Xdot[i + 1] = -X[i] * X[i + 1] * 0.5 + B * X[i];
             }
         }, k1, k2, k3, k4);
         for (int i = 0; i < WINDOW_WIDTH; i++) {

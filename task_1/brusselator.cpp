@@ -21,9 +21,9 @@ constexpr double A = 3.5;
 constexpr double B = 1.0;
 constexpr double B1 = (B + 1);
 
-constexpr double H = (double)(5E-3);
+constexpr double H = (double)(5E-4);
 
-// compile: g++ -O3 bruesselator.cpp -lsfml-graphics -lsfml-window -lsfml-system -fopenmp && ./a.out
+// compile: g++ -O3 brusselator.cpp -lsfml-graphics -lsfml-window -lsfml-system -fopenmp && ./a.out
 
 double X(double x, double y) {
     return A - B1*x + x*x*y;
@@ -37,24 +37,34 @@ void rk4(double *X, double *t, double h, void (*f)(double *X, double *Xdot), dou
     f(X, k1);
     for (int i = 0; i < size; i++) {
         k1[i] *= h;
-        k2[i] = X[i] + k1[i] * 0.5;
     }
-    f(k2, k2);
+    for (int i = 0; i < size; i++) {
+        X[i] += 0.5 * k1[i];
+    }
+    *t += 0.5 * h;
+    f(X, k2);
     for (int i = 0; i < size; i++) {
         k2[i] *= h;
-        k3[i] = X[i] + k2[i] * 0.5;
     }
-    f(k3, k3);
+    for (int i = 0; i < size; i++) {
+        X[i] += 0.5 * k2[i];
+    }
+    f(X, k3);
     for (int i = 0; i < size; i++) {
         k3[i] *= h;
-        k4[i] = X[i] + k3[i];
     }
-    f(k4, k4);
+    for (int i = 0; i < size; i++) {
+        X[i] += k3[i];
+    }
+    *t += 0.5 * h;
+    f(X, k4);
     for (int i = 0; i < size; i++) {
         k4[i] *= h;
+    }
+    for (int i = 0; i < size; i++) {
         X[i] += (k1[i] + 2 * k2[i] + 2 * k3[i] + k4[i]) / 6;
     }
-    *t += h;
+    *t += 0.5 * h;
 }
 
 int main() {

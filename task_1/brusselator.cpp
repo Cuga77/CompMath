@@ -18,10 +18,10 @@ constexpr int WINDOW_HEIGHT = 500;
 constexpr int size = 2 * WINDOW_WIDTH * WINDOW_HEIGHT;
 
 constexpr double A = 3.5;
-constexpr double B = 1.0;
+constexpr double B = 0.5;
 constexpr double B1 = (B + 1);
 
-constexpr double H = (double)(5E-2);
+constexpr double H = (double)(5E-4);
 
 // compile: g++ -O3 brusselator.cpp -lsfml-graphics -lsfml-window -lsfml-system -fopenmp && ./a.out
 
@@ -80,8 +80,8 @@ int main() {
     
     for (int i = 0; i < WINDOW_WIDTH; i++) {
         for (int j = 0; j < WINDOW_HEIGHT; j++) {
-            x[(i * WINDOW_HEIGHT + j) * 2] = (double)rand() / RAND_MAX;
-            x[(i * WINDOW_HEIGHT + j) * 2 + 1] = (double)rand() / RAND_MAX;
+            x[(i * WINDOW_HEIGHT + j) * 2] = ((double)rand() / RAND_MAX) * (1 + 0.1 * ((double)rand() / RAND_MAX - 0.5));
+            x[(i * WINDOW_HEIGHT + j) * 2 + 1] = ((double)rand() / RAND_MAX) * (1 + 0.1 * ((double)rand() / RAND_MAX - 0.5));
         }
     }
     while (window.isOpen()) {
@@ -92,14 +92,23 @@ int main() {
         }
         rk4(x, &t, H, [](double *X, double *Xdot) {
             for (int i = 0; i < size; i += 2) {
-                Xdot[i] = X[i] * X[i + 1] * 0.5 + A - B1 * X[i] - X[i];
-                Xdot[i + 1] = -X[i] * X[i + 1] * 0.5 + B * X[i];
+                Xdot[i] = X[i] * X[i] * X[i + 1] * 0.5 + A - B1 * X[i] - X[i]; // x^2y/2 + a - bx -x
+                Xdot[i + 1] = -X[i] * X[i] * X[i + 1] * 0.5 + B * X[i];        //-x^2y/2 + bx
             }
         }, k1, k2, k3, k4, temp);
         for (int i = 0; i < WINDOW_WIDTH; i++) {
             for (int j = 0; j < WINDOW_HEIGHT; j++) {
-                sf::Color color = sf::Color(255 * x[(i * WINDOW_HEIGHT + j) * 2], 255 * x[(i * WINDOW_HEIGHT + j) * 2 + 1], 0);
+                sf::Color color(255 * x[(i * WINDOW_HEIGHT + j) * 2 + 1], 255 * x[(i * WINDOW_HEIGHT + j) * 2], 0);
                 image.setPixel(i, j, color);
+            }
+        }
+        if (t > 1) {
+            t = 0;
+            for (int i = 0; i < WINDOW_WIDTH; i++) {
+                for (int j = 0; j < WINDOW_HEIGHT; j++) {
+                    x[(i * WINDOW_HEIGHT + j) * 2] = 1 + 0.1 * ((double)rand() / RAND_MAX - 1);
+                    x[(i * WINDOW_HEIGHT + j) * 2 + 1] = 1 + 0.1 * ((double)rand() / RAND_MAX - 1);
+                }
             }
         }
         texture.update(image);

@@ -21,7 +21,7 @@ constexpr double A = 3.5;
 constexpr double B = 1.0;
 constexpr double B1 = (B + 1);
 
-constexpr double H = (double)(5E-4);
+constexpr double H = (double)(5E-2);
 
 // compile: g++ -O3 brusselator.cpp -lsfml-graphics -lsfml-window -lsfml-system -fopenmp && ./a.out
 
@@ -33,31 +33,25 @@ double Y(double x, double y) {
     return B * x - x*x*y;
 }
 
-void rk4(double *X, double *t, double h, void (*f)(double *X, double *Xdot), double *k1, double *k2, double *k3, double *k4) {
+void rk4(double *X, double *t, double h, void (*f)(double *X, double *Xdot), double *k1, double *k2, double *k3, double *k4, double *Xtemp) {
     f(X, k1);
     for (int i = 0; i < size; i++) {
         k1[i] *= h;
-    }
-    for (int i = 0; i < size; i++) {
-        X[i] += 0.5 * k1[i];
+        Xtemp[i] = X[i] + 0.5 * k1[i];
     }
     *t += 0.5 * h;
-    f(X, k2);
+    f(Xtemp, k2);
     for (int i = 0; i < size; i++) {
         k2[i] *= h;
+        Xtemp[i] = X[i] + 0.5 * k2[i];
     }
-    for (int i = 0; i < size; i++) {
-        X[i] += 0.5 * k2[i];
-    }
-    f(X, k3);
+    f(Xtemp, k3);
     for (int i = 0; i < size; i++) {
         k3[i] *= h;
-    }
-    for (int i = 0; i < size; i++) {
-        X[i] += k3[i];
+        Xtemp[i] = X[i] + k3[i];
     }
     *t += 0.5 * h;
-    f(X, k4);
+    f(Xtemp, k4);
     for (int i = 0; i < size; i++) {
         k4[i] *= h;
     }
@@ -101,7 +95,7 @@ int main() {
                 Xdot[i] = X[i] * X[i + 1] * 0.5 + A - B1 * X[i] - X[i];
                 Xdot[i + 1] = -X[i] * X[i + 1] * 0.5 + B * X[i];
             }
-        }, k1, k2, k3, k4);
+        }, k1, k2, k3, k4, temp);
         for (int i = 0; i < WINDOW_WIDTH; i++) {
             for (int j = 0; j < WINDOW_HEIGHT; j++) {
                 sf::Color color = sf::Color(255 * x[(i * WINDOW_HEIGHT + j) * 2], 255 * x[(i * WINDOW_HEIGHT + j) * 2 + 1], 0);

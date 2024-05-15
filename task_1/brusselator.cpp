@@ -13,16 +13,16 @@
 // dy/dt = -x^2y/2 + bx + D(d^2y/dx^2 + d^2y/dy^2)
 
 
-constexpr int WINDOW_WIDTH = 600;
-constexpr int WINDOW_HEIGHT = 600;
+constexpr int WINDOW_WIDTH = 800;
+constexpr int WINDOW_HEIGHT = 800;
 constexpr int size = 2 * WINDOW_WIDTH * WINDOW_HEIGHT;
 
-constexpr double A = 1.5;
-constexpr double B = 4.5;
+constexpr double A = 1.3;
+constexpr double B = 3.5;
 constexpr double B1 = (B + 1);
 
 constexpr double H = 0.002;
-constexpr double D = 0.00035;
+constexpr double D = 0.00045;
 
 // compile: g++ -O3 brusselator.cpp -lsfml-graphics -lsfml-window -lsfml-system -fopenmp && ./a.out
 
@@ -88,6 +88,14 @@ int main() {
         }
         rk4(x, &t, H, [](double *X, double *Xdot) {
             for (int i = 0; i < size; i += 2) {
+                // double dx = (X[(i + 2) % size] - 2 * X[i] + X[(i - 2 + size) % size]) / (H * H);
+                // double dy = (X[(i + WINDOW_HEIGHT) % size] - 2 * X[i] + X[(i - WINDOW_HEIGHT + size) % size]) / (H * H); 
+                // double laplacian_x = dx + dy;
+
+                // double dx_y = (X[(i + 2) % size + 1] - 2 * X[i + 1] + X[(i - 2 + size) % size + 1]) / (H * H);
+                // double dy_y = (X[(i + WINDOW_HEIGHT) % size + 1] - 2 * X[i + 1] + X[(i - WINDOW_HEIGHT + size) % size + 1]) / (H * H); 
+                // double laplacian_y = dx_y + dy_y;
+                
                 double laplacian_x = (X[(i + 2) % size] - 2 * X[i] + X[(i - 2 + size) % size] + X[(i + WINDOW_HEIGHT) % size] - 2 * X[i] + X[(i - WINDOW_HEIGHT + size) % size]) / (H * H); //laplacian = (f(x + h) - 2f(x) + f(x - h)) / h^2
                 double laplacian_y = (X[(i + 2) % size + 1] - 2 * X[i + 1] + X[(i - 2 + size) % size + 1] + X[(i + WINDOW_HEIGHT) % size + 1] - 2 * X[i + 1] + X[(i - WINDOW_HEIGHT + size) % size + 1]) / (H * H); //laplacian = (f(x + h) - 2f(x) + f(x - h)) / h^2
 

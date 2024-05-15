@@ -4,28 +4,19 @@
 #include <cstring>
 #include <SFML/Graphics.hpp>
 
-
-// dx/dt = x^2y/2 + a - bx -x
-// dy/dt = -x^2y/2 + bx
-
-// with diffusion
-// dx/dt = x^2y/2 + a - bx -x + D(d^2x/dx^2 + d^2x/dy^2)
-// dy/dt = -x^2y/2 + bx + D(d^2y/dx^2 + d^2y/dy^2)
-
-
 constexpr int WINDOW_WIDTH = 800;
 constexpr int WINDOW_HEIGHT = 800;
 constexpr int size = 2 * WINDOW_WIDTH * WINDOW_HEIGHT;
 
 constexpr double A = 1.3;
-constexpr double B = 7.19;
+constexpr double B = 7.1;
 constexpr double B1 = (B + 1);
 
 constexpr double H = 0.005;
 constexpr double Dx = 0.001;
-constexpr double Dy = 0.0002;
+constexpr double Dy = 0.0001;
 
-// compile: g++ -O3 brusselator.cpp -lsfml-graphics -lsfml-window -lsfml-system -fopenmp && ./a.out
+// compile: g++ -O3 brusselator.cpp -lsfml-graphics -lsfml-window -lsfml-system  && ./a.out
 
 
 void rk4(double *X, double *t, double h, void (*f)(double *X, double *Xdot), double *k1, double *k2, double *k3, double *k4, double *Xtemp) {
@@ -76,9 +67,9 @@ int main() {
     for (int i = 0; i < WINDOW_WIDTH; i++) {
         for (int j = 0; j < WINDOW_HEIGHT; j++) {
             x[(j * WINDOW_WIDTH + i) * 2] = ((double)rand() / RAND_MAX) * 
-                (1 + 0.1 * ((double)rand() / RAND_MAX - 0.01));
+                (1 + 0.1 * ((double)rand() / RAND_MAX - 0.1));
             x[(j * WINDOW_WIDTH + i) * 2 + 1] = ((double)rand() / RAND_MAX) * 
-                (1 + 0.1 * ((double)rand() / RAND_MAX - 0.01));
+                (1 + 0.1 * ((double)rand() / RAND_MAX - 0.1));
         }
     }
     while (window.isOpen()) {
@@ -89,6 +80,22 @@ int main() {
         }
         rk4(x, &t, H, [](double *X, double *Xdot) {
             for (int i = 0; i < size; i += 2) {
+                
+                // double y_plus_h = (i + WINDOW_HEIGHT < size) ? X[i + WINDOW_HEIGHT] : 0;
+                // double y_minus_h = (i - WINDOW_HEIGHT >= 0) ? X[i - WINDOW_HEIGHT] : 0;
+                // double dx2_y = (y_plus_h - 2 * X[i] + y_minus_h) / (H * H);
+
+                // double laplacian_x = dx2_x + dx2_y;
+
+                // double x_plus_h_y = X[i + 2 + 1];
+                // double x_minus_h_y = X[i - 2 + 1];
+                // double dx2_x_y = (x_plus_h_y - 2 * X[i + 1] + x_minus_h_y) / (H * H);
+
+                // double y_plus_h_y = (i + WINDOW_HEIGHT < size) ? X[i + WINDOW_HEIGHT + 1] : 0;
+                // double y_minus_h_y = (i - WINDOW_HEIGHT >= 0) ? X[i - WINDOW_HEIGHT + 1] : 0;
+                // double dx2_y_y = (y_plus_h_y - 2 * X[i + 1] + y_minus_h_y) / (H * H);
+
+
                 double x_plus_h = X[(i + 2) % size];
                 double x_minus_h = X[(i - 2 + size) % size];
                 double dx2_x = (x_plus_h - 2 * X[i] + x_minus_h) / (H * H);

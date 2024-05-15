@@ -12,9 +12,9 @@ constexpr double A = 1.3;
 constexpr double B = 7.1;
 constexpr double B1 = (B + 1);
 
-constexpr double H = 0.005;
-constexpr double Dx = 0.001;
-constexpr double Dy = 0.0001;
+constexpr double H = 0.003;
+constexpr double Dx = 0;
+constexpr double Dy = 0;
 
 // compile: g++ -O3 brusselator.cpp -lsfml-graphics -lsfml-window -lsfml-system  && ./a.out
 
@@ -100,8 +100,8 @@ int main() {
                 double x_minus_h = X[(i - 2 + size) % size];
                 double dx2_x = (x_plus_h - 2 * X[i] + x_minus_h) / (H * H);
 
-                double y_plus_h = X[(i + WINDOW_HEIGHT) % size];
-                double y_minus_h = X[(i - WINDOW_HEIGHT + size) % size];
+                double y_plus_h = X[(i + 2 * WINDOW_WIDTH) % size];
+                double y_minus_h = X[(i - 2 * WINDOW_WIDTH + size) % size];
                 double dx2_y = (y_plus_h - 2 * X[i] + y_minus_h) / (H * H);
 
                 double laplacian_x = dx2_x + dx2_y;
@@ -110,8 +110,8 @@ int main() {
                 double x_minus_h_y = X[(i - 2 + size) % size + 1];
                 double dx2_x_y = (x_plus_h_y - 2 * X[i + 1] + x_minus_h_y) / (H * H);
 
-                double y_plus_h_y = X[(i + WINDOW_HEIGHT) % size + 1];
-                double y_minus_h_y = X[(i - WINDOW_HEIGHT + size) % size + 1]; 
+                double y_plus_h_y = X[(i + 2 * WINDOW_WIDTH) % size + 1];
+                double y_minus_h_y = X[(i - 2 * WINDOW_WIDTH + size) % size + 1]; 
                 double dx2_y_y = (y_plus_h_y - 2 * X[i + 1] + y_minus_h_y) / (H * H);
 
                 double laplacian_y = dx2_x_y + dx2_y_y;

@@ -13,16 +13,16 @@
 // dy/dt = -x^2y/2 + bx + D(d^2y/dx^2 + d^2y/dy^2)
 
 
-constexpr int WINDOW_WIDTH = 900;
-constexpr int WINDOW_HEIGHT = 900;
+constexpr int WINDOW_WIDTH = 600;
+constexpr int WINDOW_HEIGHT = 600;
 constexpr int size = 2 * WINDOW_WIDTH * WINDOW_HEIGHT;
 
 constexpr double A = 1.5;
 constexpr double B = 4.5;
 constexpr double B1 = (B + 1);
 
-constexpr double H = (double)(5E-2);
-constexpr double D = 1E-5;
+constexpr double H = 0.002;
+constexpr double D = 0.00035;
 
 // compile: g++ -O3 brusselator.cpp -lsfml-graphics -lsfml-window -lsfml-system -fopenmp && ./a.out
 
@@ -74,8 +74,10 @@ int main() {
     
     for (int i = 0; i < WINDOW_WIDTH; i++) {
         for (int j = 0; j < WINDOW_HEIGHT; j++) {
-            x[(i * WINDOW_HEIGHT + j) * 2] = ((double)rand() / RAND_MAX) * (1 + 0.1 * ((double)rand() / RAND_MAX - 0.5));
-            x[(i * WINDOW_HEIGHT + j) * 2 + 1] = ((double)rand() / RAND_MAX) * (1 + 0.1 * ((double)rand() / RAND_MAX - 0.5));
+            x[(i * WINDOW_HEIGHT + j) * 2] = ((double)rand() / RAND_MAX) * 
+                (1 + 0.1 * ((double)rand() / RAND_MAX - 0.5));
+            x[(i * WINDOW_HEIGHT + j) * 2 + 1] = ((double)rand() / RAND_MAX) * 
+                (1 + 0.1 * ((double)rand() / RAND_MAX - 0.5));
         }
     }
     while (window.isOpen()) {
@@ -86,13 +88,17 @@ int main() {
         }
         rk4(x, &t, H, [](double *X, double *Xdot) {
             for (int i = 0; i < size; i += 2) {
-                Xdot[i] = X[i] * X[i] * X[i + 1] * 0.5 + A - B1 * X[i]; //+ D * (X[(i + 2) % size] - 2 * X[i] + X[(i - 2 + size) % size]);
-                Xdot[i + 1] = -X[i] * X[i] * X[i + 1] * 0.5 + B * X[i]; //+ D * (X[(i + 2) % size] - 2 * X[i + 1] + X[(i - 2 + size) % size]);
+                double laplacian_x = (X[(i + 2) % size] - 2 * X[i] + X[(i - 2 + size) % size] + X[(i + WINDOW_HEIGHT) % size] - 2 * X[i] + X[(i - WINDOW_HEIGHT + size) % size]) / (H * H); //laplacian = (f(x + h) - 2f(x) + f(x - h)) / h^2
+                double laplacian_y = (X[(i + 2) % size + 1] - 2 * X[i + 1] + X[(i - 2 + size) % size + 1] + X[(i + WINDOW_HEIGHT) % size + 1] - 2 * X[i + 1] + X[(i - WINDOW_HEIGHT + size) % size + 1]) / (H * H); //laplacian = (f(x + h) - 2f(x) + f(x - h)) / h^2
+
+                Xdot[i] = X[i] * X[i] * X[i + 1] * 0.5 + A - B1 * X[i] + D * laplacian_x;
+                Xdot[i + 1] = -X[i] * X[i] * X[i + 1] * 0.5 + B * X[i] + D * laplacian_y;
             }
         }, k1, k2, k3, k4, temp);
         for (int i = 0; i < WINDOW_WIDTH; i++) {
             for (int j = 0; j < WINDOW_HEIGHT; j++) {
-                sf::Color color(255 * x[(i * WINDOW_HEIGHT + j) * 2 + 1], 255 * x[(i * WINDOW_HEIGHT + j) * 2], 0);
+                sf::Color color(255 * x[(i * WINDOW_HEIGHT + j) * 2 + 1],
+                    255 * x[(i * WINDOW_HEIGHT + j) * 2], 0);
                 image.setPixel(i, j, color);
             }
         }

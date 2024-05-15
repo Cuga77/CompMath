@@ -18,11 +18,12 @@ constexpr int WINDOW_HEIGHT = 800;
 constexpr int size = 2 * WINDOW_WIDTH * WINDOW_HEIGHT;
 
 constexpr double A = 1.3;
-constexpr double B = 3.7;
+constexpr double B = 7.19;
 constexpr double B1 = (B + 1);
 
-constexpr double H = 0.006;
-constexpr double D = 0.00045;
+constexpr double H = 0.005;
+constexpr double Dx = 0.001;
+constexpr double Dy = 0.0002;
 
 // compile: g++ -O3 brusselator.cpp -lsfml-graphics -lsfml-window -lsfml-system -fopenmp && ./a.out
 
@@ -74,10 +75,10 @@ int main() {
     
     for (int i = 0; i < WINDOW_WIDTH; i++) {
         for (int j = 0; j < WINDOW_HEIGHT; j++) {
-            x[(i * WINDOW_HEIGHT + j) * 2] = ((double)rand() / RAND_MAX) * 
-                (1 + 0.1 * ((double)rand() / RAND_MAX - 0.5));
-            x[(i * WINDOW_HEIGHT + j) * 2 + 1] = ((double)rand() / RAND_MAX) * 
-                (1 + 0.1 * ((double)rand() / RAND_MAX - 0.5));
+            x[(j * WINDOW_WIDTH + i) * 2] = ((double)rand() / RAND_MAX) * 
+                (1 + 0.1 * ((double)rand() / RAND_MAX - 0.01));
+            x[(j * WINDOW_WIDTH + i) * 2 + 1] = ((double)rand() / RAND_MAX) * 
+                (1 + 0.1 * ((double)rand() / RAND_MAX - 0.01));
         }
     }
     while (window.isOpen()) {
@@ -88,25 +89,34 @@ int main() {
         }
         rk4(x, &t, H, [](double *X, double *Xdot) {
             for (int i = 0; i < size; i += 2) {
-                // double dx = (X[(i + 2) % size] - 2 * X[i] + X[(i - 2 + size) % size]) / (H * H);
-                // double dy = (X[(i + WINDOW_HEIGHT) % size] - 2 * X[i] + X[(i - WINDOW_HEIGHT + size) % size]) / (H * H); 
-                // double laplacian_x = dx + dy;
+                double x_plus_h = X[(i + 2) % size];
+                double x_minus_h = X[(i - 2 + size) % size];
+                double dx2_x = (x_plus_h - 2 * X[i] + x_minus_h) / (H * H);
 
-                // double dx_y = (X[(i + 2) % size + 1] - 2 * X[i + 1] + X[(i - 2 + size) % size + 1]) / (H * H);
-                // double dy_y = (X[(i + WINDOW_HEIGHT) % size + 1] - 2 * X[i + 1] + X[(i - WINDOW_HEIGHT + size) % size + 1]) / (H * H); 
-                // double laplacian_y = dx_y + dy_y;
-                
-                // // double laplacian_x = (X[(i + 2) % size] - 2 * X[i] + X[(i - 2 + size) % size] + X[(i + WINDOW_HEIGHT) % size] - 2 * X[i] + X[(i - WINDOW_HEIGHT + size) % size]) / (H * H); //laplacian = (f(x + h) - 2f(x) + f(x - h)) / h^2
-                // // double laplacian_y = (X[(i + 2) % size + 1] - 2 * X[i + 1] + X[(i - 2 + size) % size + 1] + X[(i + WINDOW_HEIGHT) % size + 1] - 2 * X[i + 1] + X[(i - WINDOW_HEIGHT + size) % size + 1]) / (H * H); //laplacian = (f(x + h) - 2f(x) + f(x - h)) / h^2
+                double y_plus_h = X[(i + WINDOW_HEIGHT) % size];
+                double y_minus_h = X[(i - WINDOW_HEIGHT + size) % size];
+                double dx2_y = (y_plus_h - 2 * X[i] + y_minus_h) / (H * H);
 
-                Xdot[i] = X[i] * X[i] * X[i + 1] * 0.5 + A - B1 * X[i] + D * (X[(i + 2) % size] - 2 * X[i] + X[(i - 2 + size) % size] + X[(i + WINDOW_HEIGHT) % size] - 2 * X[i] + X[(i - WINDOW_HEIGHT + size) % size]) / (H * H);
-                Xdot[i + 1] = -X[i] * X[i] * X[i + 1] * 0.5 + B * X[i] + D * (X[(i + 2) % size + 1] - 2 * X[i + 1] + X[(i - 2 + size) % size + 1] + X[(i + WINDOW_HEIGHT) % size + 1] - 2 * X[i + 1] + X[(i - WINDOW_HEIGHT + size) % size + 1]) / (H * H);
+                double laplacian_x = dx2_x + dx2_y;
+
+                double x_plus_h_y = X[(i + 2) % size + 1]; 
+                double x_minus_h_y = X[(i - 2 + size) % size + 1];
+                double dx2_x_y = (x_plus_h_y - 2 * X[i + 1] + x_minus_h_y) / (H * H);
+
+                double y_plus_h_y = X[(i + WINDOW_HEIGHT) % size + 1];
+                double y_minus_h_y = X[(i - WINDOW_HEIGHT + size) % size + 1]; 
+                double dx2_y_y = (y_plus_h_y - 2 * X[i + 1] + y_minus_h_y) / (H * H);
+
+                double laplacian_y = dx2_x_y + dx2_y_y;
+
+                Xdot[i] = X[i] * X[i] * X[i + 1] * 0.5 + A - B1 * X[i] + Dx * laplacian_x;
+                Xdot[i + 1] = -X[i] * X[i] * X[i + 1] * 0.5 + B * X[i] + Dy * laplacian_y;
             }
         }, k1, k2, k3, k4, temp);
         for (int i = 0; i < WINDOW_WIDTH; i++) {
             for (int j = 0; j < WINDOW_HEIGHT; j++) {
-                sf::Color color(255 * x[(i * WINDOW_HEIGHT + j) * 2 + 1],
-                    255 * x[(i * WINDOW_HEIGHT + j) * 2], 0);
+                sf::Color color(255 * x[(j * WINDOW_WIDTH + i) * 2 + 1],
+                    255 * x[(j * WINDOW_WIDTH + i) * 2], 0);
                 image.setPixel(i, j, color);
             }
         }

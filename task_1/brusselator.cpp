@@ -12,9 +12,9 @@ constexpr double A = 1.3;
 constexpr double B = 7.1;
 constexpr double B1 = (B + 1);
 
-constexpr double H = 0.003;
-constexpr double Dx = 0;
-constexpr double Dy = 0;
+constexpr double H = 0.004;
+constexpr double Dx = 0.00007;
+constexpr double Dy = 0.00002;
 
 // compile: g++ -O3 brusselator.cpp -lsfml-graphics -lsfml-window -lsfml-system  && ./a.out
 
@@ -81,6 +81,7 @@ int main() {
         rk4(x, &t, H, [](double *X, double *Xdot) {
             for (int i = 0; i < size; i += 2) {
                 
+                //границы не включены
                 // double y_plus_h = (i + WINDOW_HEIGHT < size) ? X[i + WINDOW_HEIGHT] : 0;
                 // double y_minus_h = (i - WINDOW_HEIGHT >= 0) ? X[i - WINDOW_HEIGHT] : 0;
                 // double dx2_y = (y_plus_h - 2 * X[i] + y_minus_h) / (H * H);
@@ -123,7 +124,7 @@ int main() {
         for (int i = 0; i < WINDOW_WIDTH; i++) {
             for (int j = 0; j < WINDOW_HEIGHT; j++) {
                 sf::Color color(255 * x[(j * WINDOW_WIDTH + i) * 2 + 1],
-                    255 * x[(j * WINDOW_WIDTH + i) * 2], 0);
+                    255 * x[(j * WINDOW_WIDTH + i) * 2], 150);
                 image.setPixel(i, j, color);
             }
         }

@@ -9,10 +9,10 @@ constexpr int WINDOW_HEIGHT = 800;
 constexpr int size = 2 * WINDOW_WIDTH * WINDOW_HEIGHT;
 
 constexpr double A = 1.3;
-constexpr double B = 7.1;
+constexpr double B = 2.5;
 constexpr double B1 = (B + 1);
 
-constexpr double H = 0.004;
+constexpr double H = 0.009;
 constexpr double Dx = 0.00007;
 constexpr double Dy = 0.00002;
 
@@ -80,8 +80,12 @@ int main() {
         }
         rk4(x, &t, H, [](double *X, double *Xdot) {
             for (int i = 0; i < size; i += 2) {
-                
-                //границы не включены
+                double x_plus_h = X[(i + 2) % size];
+                double x_minus_h = X[(i - 2 + size) % size];
+                double dx2_x = (x_plus_h - 2 * X[i] + x_minus_h) / (H * H);
+
+                // //границы не включены
+                // ////
                 // double y_plus_h = (i + WINDOW_HEIGHT < size) ? X[i + WINDOW_HEIGHT] : 0;
                 // double y_minus_h = (i - WINDOW_HEIGHT >= 0) ? X[i - WINDOW_HEIGHT] : 0;
                 // double dx2_y = (y_plus_h - 2 * X[i] + y_minus_h) / (H * H);
@@ -95,11 +99,7 @@ int main() {
                 // double y_plus_h_y = (i + WINDOW_HEIGHT < size) ? X[i + WINDOW_HEIGHT + 1] : 0;
                 // double y_minus_h_y = (i - WINDOW_HEIGHT >= 0) ? X[i - WINDOW_HEIGHT + 1] : 0;
                 // double dx2_y_y = (y_plus_h_y - 2 * X[i + 1] + y_minus_h_y) / (H * H);
-
-
-                double x_plus_h = X[(i + 2) % size];
-                double x_minus_h = X[(i - 2 + size) % size];
-                double dx2_x = (x_plus_h - 2 * X[i] + x_minus_h) / (H * H);
+                // ////
 
                 double y_plus_h = X[(i + 2 * WINDOW_WIDTH) % size];
                 double y_minus_h = X[(i - 2 * WINDOW_WIDTH + size) % size];

@@ -1,6 +1,5 @@
 #include <iostream>
 #include <iomanip>
-#include "math.h"
 #include <cmath>
 
 constexpr int TAYLOR_SERIES_TERMS = 11;
@@ -8,7 +7,7 @@ constexpr int TAYLOR_SERIES_TERMS = 11;
 double cos_terms(double x, double n) {
     double sum = 0.0;
     for (int i = 0; i < n; i++) {
-        double term = pow(-1, i) * pow(x, 2 * i) / tgamma(2 * i + 1);
+        double term = pow(-1, i) * powf128(x, 2 * i) / tgammaf128(2 * i + 1);
         sum += term;
     }
     return sum;

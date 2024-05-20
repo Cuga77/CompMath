@@ -1,32 +1,41 @@
 #include <iostream>
-#include <iomanip>
 #include <cmath>
+#include <iomanip>
 
-constexpr int TAYLOR_SERIES_TERMS = 11;
+typedef long double ld;
 
-double cos_terms(double x, double n) {
-    double sum = 0.0;
-    for (int i = 0; i < n; i++) {
-        double term = pow(-1, i) * powf128(x, 2 * i) / tgammaf128(2 * i + 1);
-        sum += term;
+constexpr ld eps = 1e-254;
+
+ld cos_dd(ld x, ld eps) {
+    // Уменьшение x до значения в пределах от -π до π
+    x = fmod(x, 2 * M_PI);
+    if (x < -M_PI) {
+        x += 2 * M_PI;
+    } else if (x > M_PI) {
+        x -= 2 * M_PI;
     }
+
+    ld term = 1;
+    ld sum = term;
+    int i = 0;
+
+    while (std::abs(term) > eps) {
+        term *= -x * x / ((2 * i + 1) * (2 * i + 2)); // -x^2 / (2n + 1)(2n + 2) 
+        sum += term;
+        i++;
+    }
+
     return sum;
 }
 
-long double double_double_cos(long double * delta, double x, double n) {
-    long double cos_x = cosl(x);
-    double cos_x_approx = cos_terms(x, n);
-    *delta = cos_x - static_cast<long double>(cos_x_approx);
-    return cos_x;
-}
-
 int main() {
-    long double delta;
-    double x = 1.5;
-    long double cos_x = double_double_cos(&delta, x, TAYLOR_SERIES_TERMS);
-    double double_cos_x = cos_terms(x, TAYLOR_SERIES_TERMS);
-    std::cout << "Cos:\t\t   " << std::setprecision(50) << cos_x
-    << "\n" << "Double double cos: " << std::setprecision(50) << double_cos_x 
-    << "\n" << "Delta:\t\t   " << std::setprecision(50)<< delta << std::endl;
+    ld x, delta;
+    std::cin >> x;
+    std::cout << std::setprecision(50) << std::fixed;
+    std::cout << "double_double cos x = "  << cos_dd(x, eps) << std::endl;
+    std::cout << "\t      cos x = " << cos(x) << std::endl;
+    delta = std::abs(cos_dd(x, eps) - cos(x));
+    std::cout << "\t      delta = " << delta << std::endl;
+
     return 0;
 }

@@ -29,12 +29,12 @@ ld cos_dd(ld x, ld eps) {
 }
 
 int main() {
-    ld x, delta;
+    ld x;
     std::cin >> x;
     std::cout << std::setprecision(50) << std::fixed;
     std::cout << "double_double cos x = "  << cos_dd(x, eps) << std::endl;
     std::cout << "\t      cos x = " << cos(x) << std::endl;
-    delta = std::abs(cos_dd(x, eps) - cos(x));
+    ld delta = std::abs(cos_dd(x, eps) - cos(x));
     std::cout << "\t      delta = " << delta << std::endl;
 
     return 0;

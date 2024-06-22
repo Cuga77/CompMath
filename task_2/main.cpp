@@ -1,41 +1,91 @@
 #include <iostream>
 #include <cmath>
-#include <iomanip>
+#include <cstdio>
+#include <limits>
 
-typedef long double ld;
+struct DoubleDouble {
+    double hi;
+    double lo;
+    explicit DoubleDouble(double h = 0, double l = 0) : hi(h), lo(l) {}
+};
 
-constexpr ld eps = 1e-254;
+DoubleDouble utilTwoSum(double a, double b) {
+    double s = a + b;
+    double t = s - a;
+    double err = (a - (s - t)) + (b - t);
+    return DoubleDouble(s, err);
+}
 
-ld cos_dd(ld x, ld eps) {
-    // Уменьшение x до значения в пределах от -π до π
-    x = fmod(x, 2 * M_PI);
-    if (x < -M_PI) {
-        x += 2 * M_PI;
-    } else if (x > M_PI) {
-        x -= 2 * M_PI;
-    }
+DoubleDouble add(const DoubleDouble& a, const DoubleDouble& b) {
+    DoubleDouble sum = utilTwoSum(a.hi, b.hi);
+    double s = sum.hi;
+    double e = sum.lo + a.lo + b.lo;
+    sum = utilTwoSum(s, e);
+    return sum;
+}
 
-    ld term = 1;
-    ld sum = term;
-    int i = 0;
+DoubleDouble utilTwoProd(double a, double b) {
+    double p = a * b;
+    double err = std::fma(a, b, -p);
+    return DoubleDouble(p, err);
+}
 
-    while (std::abs(term) > eps) {
-        term *= -x * x / ((2 * i + 1) * (2 * i + 2)); // -x^2 / (2n + 1)(2n + 2) 
-        sum += term;
-        i++;
+DoubleDouble multiply(const DoubleDouble& a, const DoubleDouble& b) {
+    DoubleDouble p1 = utilTwoProd(a.hi, b.hi);
+    p1.lo += a.hi * b.lo + a.lo * b.hi;
+    DoubleDouble prod = utilTwoSum(p1.hi, p1.lo);
+    return prod;
+}
+
+DoubleDouble divide(const DoubleDouble& a, const DoubleDouble& b) {
+    double q1 = a.hi / b.hi;
+    DoubleDouble r = add(a, DoubleDouble(-q1 * b.hi, -q1 * b.lo));
+    double q2 = r.hi / b.hi;
+    DoubleDouble result = add(DoubleDouble(q1, 0), DoubleDouble(q2, 0));
+    return result;
+}
+
+DoubleDouble negate(const DoubleDouble& a) {
+    return DoubleDouble(-a.hi, -a.lo);
+}
+
+DoubleDouble sin(const DoubleDouble& x) {
+    DoubleDouble term = x;
+    DoubleDouble sum = term;
+    DoubleDouble x_squared = multiply(x, x);
+    int n = 1;
+
+    while (true) {
+        DoubleDouble denom1 = DoubleDouble(2 * n, 0.0);
+        DoubleDouble denom2 = DoubleDouble(2 * n + 1, 0.0);
+        DoubleDouble denom = multiply(denom1, denom2);
+
+        term = multiply(term, negate(x_squared));
+        term = divide(term, denom);
+
+        DoubleDouble new_sum = add(sum, term);
+
+        DoubleDouble relativeError = divide(term, new_sum);
+        if (std::fabs(relativeError.hi + relativeError.lo) < std::numeric_limits<double>::epsilon()) {
+            break;
+        }
+
+        sum = new_sum;
+        ++n;
     }
 
     return sum;
 }
 
 int main() {
-    ld x;
-    std::cin >> x;
-    std::cout << std::setprecision(50) << std::fixed;
-    std::cout << "double_double cos x = "  << cos_dd(x, eps) << std::endl;
-    std::cout << "\t      cos x = " << cos(x) << std::endl;
-    ld delta = std::abs(cos_dd(x, eps) - cos(x));
-    std::cout << "\t      delta = " << delta << std::endl;
+    double input;
+    std::printf("Enter the value of x to compute sin(x): ");
+    std::scanf("%lf", &input);
+
+    DoubleDouble x(input, 0.0);
+    DoubleDouble result = sin(x);
+    
+    std::printf("sin(%.40f) = %.40e + %.40e\nSummed result = %.40e\n", input, result.hi, result.lo, result.hi + result.lo);
 
     return 0;
 }
